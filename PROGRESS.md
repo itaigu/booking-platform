@@ -6,8 +6,9 @@ Platforms we use:
 
 | Platform | What it's for | Link |
 | --- | --- | --- |
-| Supabase | Database and staff logins | [supabase.com/dashboard](https://supabase.com/dashboard) (project "cabo sailing Saas booking software") |
-| Vercel | Hosts the staff dashboard | [vercel.com/dashboard](https://vercel.com/dashboard) |
+| Supabase | Database and staff logins | [supabase.com/dashboard/project/kblghgkxcyrpjmjokshj](https://supabase.com/dashboard/project/kblghgkxcyrpjmjokshj) |
+| **Staff dashboard** | The live system staff log in to | [booking-platform-sooty.vercel.app](https://booking-platform-sooty.vercel.app) |
+| Vercel | Hosts the staff dashboard | [vercel.com/dashboard](https://vercel.com/dashboard) (project "booking-platform") |
 | GitHub | Stores all the code | [github.com/itaigu/booking-platform](https://github.com/itaigu/booking-platform) |
 | Stripe | Payments (added in step 4) | [dashboard.stripe.com](https://dashboard.stripe.com) |
 | Rezdy | Current system, keeps running until step 4 is done | [app.rezdy.com](https://app.rezdy.com) |
@@ -42,6 +43,7 @@ The plan may change after talking with the team about what they really need.
 - Created the Supabase project and loaded the database into it.
 - Created the Vercel account (signed in with GitHub). Step 1 is done.
 - Built the first version of the staff dashboard: login with roles, calendar, trip guest lists, bookings (create, search, edit, move to another trip, cancel), tours with ticket types and sale prices, boats with maintenance blocks, schedules, and staff. Spanish and English. Setup steps are in [docs/setup.md](docs/setup.md).
+- Updated the database, created the first admin login and put the dashboard online at booking-platform-sooty.vercel.app.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
