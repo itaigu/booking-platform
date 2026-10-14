@@ -2,19 +2,28 @@ import Link from "next/link";
 import { pageContext } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
 import { TourFields, type Product } from "@/components/tour-fields";
-import { Badge, Button, Card, Flash, PageTitle } from "@/components/ui";
+import { AddToggle, Badge, Button, Card, Flash, PageTitle } from "@/components/ui";
 import { saveTour } from "./actions";
 
 export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
   const sp = await searchParams;
   const { supabase, lang, t } = await pageContext(["admin"]);
+  const adding = sp.add === "1";
   const { data } = await supabase.from("products").select("*, ticket_types(price)").order("active", { ascending: false }).order("name_en");
   const tours = (data ?? []) as (Product & { ticket_types: { price: number }[] })[];
 
   return (
     <>
-      <PageTitle>{t("tours")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/tours" open={adding} label={t("newTour")} />}>{t("tours")}</PageTitle>
       <Flash error={sp.error as string | undefined} />
+      {adding && (
+        <Card title={t("newTour")}>
+          <form action={saveTour}>
+            <TourFields t={t} />
+            <Button type="submit" className="mt-4">{t("add")}</Button>
+          </form>
+        </Card>
+      )}
       <Card>
         <ul className="divide-y divide-slate-100">
           {tours.map((p) => (
@@ -34,12 +43,6 @@ export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
             </li>
           ))}
         </ul>
-      </Card>
-      <Card title={t("newTour")}>
-        <form action={saveTour}>
-          <TourFields t={t} />
-          <Button type="submit" className="mt-4">{t("add")}</Button>
-        </form>
       </Card>
     </>
   );

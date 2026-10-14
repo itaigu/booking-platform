@@ -182,6 +182,10 @@ const dict = {
   existingCustomer: ["Returning customer?", "¿Cliente existente?"],
   upcomingTrips: ["Upcoming trips", "Próximas salidas"],
   none: ["None", "Ninguno"],
+  changePassword: ["Change password", "Cambiar contraseña"],
+  newPassword: ["New password", "Nueva contraseña"],
+  repeatPassword: ["Repeat new password", "Repite la nueva contraseña"],
+  passwordHint: ["At least 8 characters", "Mínimo 8 caracteres"],
 } as const;
 
 export type Key = keyof typeof dict;
@@ -212,6 +216,9 @@ const errorsEs: [RegExp, string][] = [
   [/one year or less/, "Elige un rango de un año o menos"],
   [/Move or cancel its bookings first/, "Primero mueve o cancela sus reservas"],
   [/Choose at least one day/, "Elige al menos un día"],
+  [/at least 8 characters/, "La contraseña debe tener al menos 8 caracteres"],
+  [/passwords don't match/, "Las dos contraseñas no coinciden"],
+  [/New password should be different/, "La nueva contraseña debe ser distinta a la anterior"],
   [/products_check/, "Un charter privado necesita precio base y personas incluidas"],
   [/price_rules_check1/, "Escribe el % de descuento o un precio fijo, no ambos"],
   [/duplicate key value/, "Ya existe uno con ese nombre"],
