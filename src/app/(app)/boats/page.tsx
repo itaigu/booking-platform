@@ -17,11 +17,28 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
       <Card>
-        <div className="space-y-3">
-          {(boats ?? []).map((b) => (
-            <BoatForm key={b.id} boat={b} t={t} />
-          ))}
-        </div>
+        {(boats ?? []).length === 0 ? (
+          <p className="text-sm text-slate-500">{t("noResults")}</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {(boats ?? []).map((b) => (
+              <li key={b.id} className="py-2">
+                <details>
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1">
+                    <span className="flex-1 font-medium">{b.name}</span>
+                    <span className="text-sm text-slate-600">{b.length_ft ? `${b.length_ft} ft` : ""}</span>
+                    <span className="text-sm text-slate-600">{b.max_guests} {t("guests").toLowerCase()}</span>
+                    {b.active ? <Badge tone="green">{t("active")}</Badge> : <Badge>{t("inactive")}</Badge>}
+                    <span className="rounded-md border border-slate-300 px-3 py-1 text-sm">{t("edit")}</span>
+                  </summary>
+                  <div className="mt-3 rounded-md bg-slate-50 p-3">
+                    <BoatForm boat={b} t={t} />
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <Card title={t("newBoat")}>
@@ -80,7 +97,6 @@ function BoatForm({ boat, t }: { boat?: BoatRow; t: import("@/lib/i18n").T }) {
       <Field label={t("maxGuests")}><Input name="max_guests" type="number" min={1} defaultValue={boat?.max_guests} required /></Field>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="active" defaultChecked={boat?.active ?? true} /> {t("active")}
-        {boat && !boat.active && <Badge tone="slate">{t("inactive")}</Badge>}
       </label>
       <Button type="submit">{boat ? t("save") : t("add")}</Button>
     </form>

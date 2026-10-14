@@ -1,7 +1,7 @@
 import { pageContext } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Key } from "@/lib/i18n";
-import { Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
 import { addStaff, updateStaff } from "./actions";
 
 const roles = ["admin", "office", "dock", "crew"] as const;
@@ -20,7 +20,14 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
       <Card>
         <div className="space-y-3">
           {(staff ?? []).map((s) => (
-            <form key={s.id} action={updateStaff} className="grid grid-cols-2 gap-3 sm:grid-cols-6 sm:items-end">
+            <details key={s.id} className="border-b border-slate-100 pb-3 last:border-0">
+            <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1">
+              <span className="flex-1 font-medium">{s.full_name}</span>
+              <span className="text-sm text-slate-600">{t(`role_${s.role}` as Key)}</span>
+              {s.active ? <Badge tone="green">{t("active")}</Badge> : <Badge>{t("inactive")}</Badge>}
+              <span className="rounded-md border border-slate-300 px-3 py-1 text-sm">{t("edit")}</span>
+            </summary>
+            <form action={updateStaff} className="mt-3 rounded-md bg-slate-50 p-3 grid grid-cols-2 gap-3 sm:grid-cols-6 sm:items-end">
               <input type="hidden" name="id" value={s.id} />
               <div className="col-span-2">
                 <Field label={t("name")}><Input name="full_name" defaultValue={s.full_name} required /></Field>
@@ -41,8 +48,9 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="active" defaultChecked={s.active} disabled={s.id === me.id} /> {t("active")}
               </label>
-              <Button type="submit" variant="secondary">{t("save")}</Button>
+              <Button type="submit">{t("save")}</Button>
             </form>
+            </details>
           ))}
         </div>
       </Card>
