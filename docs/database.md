@@ -45,3 +45,7 @@ These hold no matter which screen or channel a booking comes from:
 - **Prices:** `quote_booking` works out the price, including seasonal and sale prices.
 - **Bookings:** `create_booking` saves the customer, booking and items in one go;
   `reschedule_booking` moves a booking to another trip of the same tour.
+
+## Boat colors (`20261014020000_boat_colors.sql`)
+
+- Each boat has a `color` used for its column and trips on the day calendar.

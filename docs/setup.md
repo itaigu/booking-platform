@@ -6,6 +6,7 @@ Do these once, in order.
 
 In Supabase, open **SQL Editor → New query**, paste the whole of
 `supabase/migrations/20261014010000_dashboard.sql` and click **Run**.
+Then do the same with `supabase/migrations/20261014020000_boat_colors.sql`.
 
 ## 2. Create the first admin login
 

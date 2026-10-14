@@ -11,6 +11,7 @@ export async function saveBoat(form: FormData) {
     length_ft: num(form, "length_ft"),
     max_guests: num(form, "max_guests"),
     active: form.get("active") === "on",
+    color: str(form, "color") || "sky",
   };
   const id = str(form, "id");
   const { error } = id

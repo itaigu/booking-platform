@@ -55,3 +55,21 @@ export function isDay(s: string | undefined): s is string {
 export function localDayOf(iso: string) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(new Date(iso));
 }
+
+// Minutes since midnight in Cabo for a timestamp, e.g. 17:30 → 1050.
+export function localMinutes(iso: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+    .formatToParts(new Date(iso));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute");
+}
+
+export function fmtLongDate(day: string, lang: Lang) {
+  return new Intl.DateTimeFormat(lang === "es" ? "es-MX" : "en-US", {
+    timeZone: TZ,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(dayStart(day)));
+}
