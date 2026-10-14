@@ -45,6 +45,7 @@ The plan may change after talking with the team about what they really need.
 - Built the first version of the staff dashboard: login with roles, calendar, trip guest lists, bookings (create, search, edit, move to another trip, cancel), tours with ticket types and sale prices, boats with maintenance blocks, schedules, and staff. Spanish and English. Setup steps are in [docs/setup.md](docs/setup.md).
 - Updated the database, created the first admin login and put the dashboard online at booking-platform-sooty.vercel.app.
 - Added a "change password" page: click your name at the top right.
+- Calendar now shows one day at a time, with hour lines, a column per boat and a color per boat.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

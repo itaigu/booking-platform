@@ -1,6 +1,7 @@
 import { pageContext } from "@/lib/auth";
 import { fmtDateTime, todayLocal } from "@/lib/format";
 import { AddToggle, Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { boatColors, colorOf, type BoatColor } from "@/lib/colors";
 import { addBlock, deleteBlock, saveBoat } from "./actions";
 
 export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
@@ -32,6 +33,7 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
               <li key={b.id} className="py-2">
                 <details>
                   <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1">
+                    <span className={`h-3 w-3 rounded-full ${colorOf(b.color).dot}`} />
                     <span className="flex-1 font-medium">{b.name}</span>
                     <span className="text-sm text-slate-600">{b.length_ft ? `${b.length_ft} ft` : ""}</span>
                     <span className="text-sm text-slate-600">{b.max_guests} {t("guests").toLowerCase()}</span>
@@ -88,7 +90,7 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
   );
 }
 
-type BoatRow = { id: number; name: string; length_ft: number | null; max_guests: number; active: boolean; notes: string | null };
+type BoatRow = { id: number; name: string; length_ft: number | null; max_guests: number; active: boolean; notes: string | null; color?: string };
 
 function BoatForm({ boat, t }: { boat?: BoatRow; t: import("@/lib/i18n").T }) {
   return (
@@ -103,6 +105,17 @@ function BoatForm({ boat, t }: { boat?: BoatRow; t: import("@/lib/i18n").T }) {
         <input type="checkbox" name="active" defaultChecked={boat?.active ?? true} /> {t("active")}
       </label>
       <Button type="submit">{boat ? t("save") : t("add")}</Button>
+      <fieldset className="col-span-2 sm:col-span-6">
+        <legend className="mb-1 text-sm font-medium text-slate-700">{t("calendarColor")}</legend>
+        <div className="flex flex-wrap gap-3">
+          {(Object.keys(boatColors) as BoatColor[]).map((c) => (
+            <label key={c} className="cursor-pointer">
+              <input type="radio" name="color" value={c} defaultChecked={(boat?.color ?? "sky") === c} className="peer sr-only" />
+              <span className={`block h-8 w-8 rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-slate-900 ${boatColors[c].dot}`} title={c} />
+            </label>
+          ))}
+        </div>
+      </fieldset>
     </form>
   );
 }
