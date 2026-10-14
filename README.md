@@ -2,6 +2,7 @@
 
 In-house booking system for Cabo Sailing, replacing Rezdy. Internal staff tool only.
 
+- `NEXT-STEPS.md` lists what to do next, click by click.
 - `PROGRESS.md` tracks what we have done and links to the platforms we use.
 - `docs/setup.md` explains how to set up the database, the first login and Vercel.
 - `docs/database.md` explains the database in plain language.

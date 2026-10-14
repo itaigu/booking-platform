@@ -14,6 +14,8 @@ Platforms we use:
 
 Never write passwords or secret keys in this file.
 
+**What to do next:** see [NEXT-STEPS.md](NEXT-STEPS.md).
+
 ## The plan
 
 1. **Set up the basics:** accounts on Supabase, Vercel and GitHub, and the database design
