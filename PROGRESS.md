@@ -27,8 +27,8 @@ The plan may change after talking with the team about what they really need.
 
 | Step | Status |
 | --- | --- |
-| 1. Set up the basics | In progress: Vercel account left |
-| 2. Core staff dashboard | Not started |
+| 1. Set up the basics | Done |
+| 2. Core staff dashboard | In progress |
 | 3. Hotel bookings and commissions | Not started |
 | 4. Everything else, switch off Rezdy | Not started |
 
@@ -38,6 +38,7 @@ The plan may change after talking with the team about what they really need.
 - Agreed the 4-step plan. Website online booking is out of scope for now.
 - Designed the database and tested its rules: no overbooking, no double-booked boats, one hotel code per booking, commission frozen at sale time, cancelled bookings cancel their commission. See [docs/database.md](docs/database.md).
 - Created the Supabase project and loaded the database into it.
+- Created the Vercel account (signed in with GitHub). Step 1 is done.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
