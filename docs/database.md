@@ -34,3 +34,14 @@ These hold no matter which screen or channel a booking comes from:
   (`hotel_prices` supports both.)
 - Do hotels collect payment from the guest, or does the guest pay us?
 - Do we need CFDI invoices?
+
+## Added for the dashboard (`20261014010000_dashboard.sql`)
+
+- **Roles:** admin manages tours, boats, schedules, prices and staff; office
+  manages trips and bookings; dock and crew can view the calendar and guest lists.
+- **Availability:** `departure_availability` shows seats booked and seats left per trip.
+- **Trips from schedules:** `generate_departures` fills the calendar for a date
+  range, skipping days out of season, already created, or with no free boat.
+- **Prices:** `quote_booking` works out the price, including seasonal and sale prices.
+- **Bookings:** `create_booking` saves the customer, booking and items in one go;
+  `reschedule_booking` moves a booking to another trip of the same tour.

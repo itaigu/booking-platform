@@ -14,6 +14,8 @@ Platforms we use:
 
 Never write passwords or secret keys in this file.
 
+**What to do next:** see [NEXT-STEPS.md](NEXT-STEPS.md).
+
 ## The plan
 
 1. **Set up the basics:** accounts on Supabase, Vercel and GitHub, and the database design
@@ -39,6 +41,7 @@ The plan may change after talking with the team about what they really need.
 - Designed the database and tested its rules: no overbooking, no double-booked boats, one hotel code per booking, commission frozen at sale time, cancelled bookings cancel their commission. See [docs/database.md](docs/database.md).
 - Created the Supabase project and loaded the database into it.
 - Created the Vercel account (signed in with GitHub). Step 1 is done.
+- Built the first version of the staff dashboard: login with roles, calendar, trip guest lists, bookings (create, search, edit, move to another trip, cancel), tours with ticket types and sale prices, boats with maintenance blocks, schedules, and staff. Spanish and English. Setup steps are in [docs/setup.md](docs/setup.md).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
