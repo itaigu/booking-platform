@@ -383,3 +383,14 @@ alter table staff enable row level security;
 create policy staff_read on staff for select to authenticated using (is_active_staff());
 create policy staff_admin_write on staff for all to authenticated
   using (is_admin()) with check (is_admin());
+
+-- ---------------------------------------------------------------------------
+-- Access for the dashboard. Only logged-in users get table access, and the
+-- security rules above still decide which rows they can see. Visitors who are
+-- not logged in ("anon") get nothing.
+-- ---------------------------------------------------------------------------
+
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+grant execute on function is_active_staff(), is_admin() to authenticated;
