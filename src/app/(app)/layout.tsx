@@ -34,9 +34,10 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
               ))}
           </nav>
           <div className="flex items-center gap-2 text-sm">
-            <span className="hidden text-slate-500 sm:inline">
-              {staff.full_name} · {t(`role_${staff.role}`)}
-            </span>
+            <Link href="/account" className="text-slate-500 hover:underline" title={t("changePassword")}>
+              {staff.full_name}
+              <span className="hidden sm:inline"> · {t(`role_${staff.role}`)}</span>
+            </Link>
             <LanguageSwitch lang={lang} />
             <form action={signOut}>
               <button type="submit" className="rounded-md px-2 py-1 text-xs text-slate-600 hover:bg-slate-100">
