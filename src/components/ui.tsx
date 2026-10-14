@@ -95,3 +95,20 @@ export function Badge({ children, tone = "slate" }: { children: ReactNode; tone?
 export function Grid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>;
 }
+
+// Small square "+" button for the page title. Opens the "add" form by adding
+// ?add=1 to the page link; shows "×" to close it again.
+export function AddToggle({ href, open, label }: { href: string; open: boolean; label: string }) {
+  return (
+    <Link
+      href={open ? href : `${href}?add=1`}
+      title={label}
+      aria-label={label}
+      className={`flex h-10 w-10 items-center justify-center rounded-md text-2xl leading-none ${
+        open ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" : "bg-sky-700 text-white hover:bg-sky-800"
+      }`}
+    >
+      {open ? "×" : "+"}
+    </Link>
+  );
+}

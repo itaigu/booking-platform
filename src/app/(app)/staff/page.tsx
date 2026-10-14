@@ -1,7 +1,7 @@
 import { pageContext } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/server";
 import type { Key } from "@/lib/i18n";
-import { Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { AddToggle, Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
 import { addStaff, updateStaff } from "./actions";
 
 const roles = ["admin", "office", "dock", "crew"] as const;
@@ -9,14 +9,42 @@ const roles = ["admin", "office", "dock", "crew"] as const;
 export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
   const sp = await searchParams;
   const { supabase, staff: me, t } = await pageContext(["admin"]);
+  const adding = sp.add === "1";
   const { data: staff } = await supabase.from("staff").select("*").order("full_name");
   const canAdd = createAdminClient() !== null;
 
   return (
     <>
-      <PageTitle>{t("staff")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/staff" open={adding} label={t("newStaff")} />}>{t("staff")}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
+      {adding && (
+        <Card title={t("newStaff")}>
+          {!canAdd ? (
+            <p className="text-sm text-slate-600">{t("noSecretKey")}</p>
+          ) : (
+            <form action={addStaff} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
+              <Field label={t("name")}><Input name="full_name" required /></Field>
+              <Field label={t("email")}><Input name="email" type="email" required /></Field>
+              <Field label={t("tempPassword")}><Input name="password" type="text" minLength={8} required /></Field>
+              <Field label={t("role")}>
+                <Select name="role" defaultValue="office">
+                  {roles.map((r) => (
+                    <option key={r} value={r}>{t(`role_${r}` as Key)}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t("language")}>
+                <Select name="language" defaultValue="es">
+                  <option value="es">Español</option>
+                  <option value="en">English</option>
+                </Select>
+              </Field>
+              <Button type="submit">{t("add")}</Button>
+            </form>
+          )}
+        </Card>
+      )}
       <Card>
         <div className="space-y-3">
           {(staff ?? []).map((s) => (
@@ -55,31 +83,6 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
         </div>
       </Card>
 
-      <Card title={t("newStaff")}>
-        {!canAdd ? (
-          <p className="text-sm text-slate-600">{t("noSecretKey")}</p>
-        ) : (
-          <form action={addStaff} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
-            <Field label={t("name")}><Input name="full_name" required /></Field>
-            <Field label={t("email")}><Input name="email" type="email" required /></Field>
-            <Field label={t("tempPassword")}><Input name="password" type="text" minLength={8} required /></Field>
-            <Field label={t("role")}>
-              <Select name="role" defaultValue="office">
-                {roles.map((r) => (
-                  <option key={r} value={r}>{t(`role_${r}` as Key)}</option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={t("language")}>
-              <Select name="language" defaultValue="es">
-                <option value="es">Español</option>
-                <option value="en">English</option>
-              </Select>
-            </Field>
-            <Button type="submit">{t("add")}</Button>
-          </form>
-        )}
-      </Card>
     </>
   );
 }

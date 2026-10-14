@@ -1,11 +1,12 @@
 import { pageContext } from "@/lib/auth";
 import { fmtDateTime, todayLocal } from "@/lib/format";
-import { Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { AddToggle, Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
 import { addBlock, deleteBlock, saveBoat } from "./actions";
 
 export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
   const sp = await searchParams;
   const { supabase, lang, t } = await pageContext(["admin"]);
+  const adding = sp.add === "1";
   const [{ data: boats }, { data: blocks }] = await Promise.all([
     supabase.from("boats").select("*").order("name"),
     supabase.from("boat_blocks").select("*, boats(name)").gte("ends_at", new Date().toISOString()).order("starts_at"),
@@ -13,8 +14,14 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
 
   return (
     <>
-      <PageTitle>{t("boats")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/boats" open={adding} label={t("newBoat")} />}>{t("boats")}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
+
+      {adding && (
+        <Card title={t("newBoat")}>
+          <BoatForm t={t} />
+        </Card>
+      )}
 
       <Card>
         {(boats ?? []).length === 0 ? (
@@ -41,9 +48,6 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
         )}
       </Card>
 
-      <Card title={t("newBoat")}>
-        <BoatForm t={t} />
-      </Card>
 
       <Card title={t("blocks")}>
         <ul className="mb-4 divide-y divide-slate-100 text-sm">
