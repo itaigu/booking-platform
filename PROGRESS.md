@@ -52,6 +52,7 @@ The plan may change after talking with the team about what they really need.
 ### 2026-10-15
 - Simpler tour form: one name instead of English and Spanish, + and − counters for duration, guests included (1 to 4) and extra guests, and a price per extra hour. Start times are picked by tapping an hour and minutes instead of typing. Database update: `20261015000000_tour_options.sql` (Claude ran it directly in Supabase).
 - Connected Claude to Supabase.
+- Menu moved to a sidebar on the left (☰ button on phones). The calendar has a Day / Week switch; Day is the default.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

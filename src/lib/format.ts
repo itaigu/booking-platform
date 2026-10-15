@@ -73,3 +73,11 @@ export function fmtLongDate(day: string, lang: Lang) {
     year: "numeric",
   }).format(new Date(dayStart(day)));
 }
+
+export function fmtShortDate(day: string, lang: Lang) {
+  return new Intl.DateTimeFormat(lang === "es" ? "es-MX" : "en-US", {
+    timeZone: TZ,
+    day: "numeric",
+    month: "short",
+  }).format(new Date(dayStart(day)));
+}
