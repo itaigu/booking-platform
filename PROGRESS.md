@@ -15,6 +15,8 @@ Platforms we use:
 
 Never write passwords or secret keys in this file.
 
+**Claude and Supabase:** Claude is connected to Supabase and runs database updates itself while we only have test data. Once we start using real data (real bookings and customers), Claude must not change anything in Supabase without explicit permission each time.
+
 **What to do next:** see [NEXT-STEPS.md](NEXT-STEPS.md).
 
 ## The plan
@@ -48,7 +50,8 @@ The plan may change after talking with the team about what they really need.
 - Calendar now shows one day at a time, with hour lines, a column per boat and a color per boat.
 
 ### 2026-10-15
-- Simpler tour form: one name instead of English and Spanish, + and − counters for duration, guests included (1 to 4) and extra guests, and a price per extra hour. Start times are picked by tapping an hour and minutes instead of typing. Database update: `20261015000000_tour_options.sql`.
+- Simpler tour form: one name instead of English and Spanish, + and − counters for duration, guests included (1 to 4) and extra guests, and a price per extra hour. Start times are picked by tapping an hour and minutes instead of typing. Database update: `20261015000000_tour_options.sql` (Claude ran it directly in Supabase).
+- Connected Claude to Supabase.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
