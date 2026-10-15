@@ -5,7 +5,7 @@ import { CalendarToolbar } from "@/components/calendar-toolbar";
 import type { Availability } from "@/lib/types";
 import { DayGrid, type Block, type Boat } from "@/components/day-grid";
 import { WeekGrid } from "@/components/week-grid";
-import { AddToggle, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { AddToggle, Button, ButtonLink, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
 import { createTrip } from "./actions";
 
 
@@ -32,7 +32,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       .select("id, boat_id, starts_at, ends_at, reason")
       .lt("starts_at", dayStart(next))
       .gt("ends_at", dayStart(from)),
-    supabase.from("products").select("id, name_en, name_es").eq("active", true).order("name_en"),
+    supabase.from("products").select("id, name_en, name_es").eq("active", true).eq("one_off", false).order("name_en"),
     supabase.from("boats").select("*").order("name"),
   ]);
   const trips = (tripData ?? []) as Availability[];
@@ -50,7 +50,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       <PageTitle
         actions={
           canBook(staff.role) && (
-            <AddToggle href={q(date)} open={adding} label={t("addTripShort")} closeLabel={t("close")} />
+            <>
+              <AddToggle href={q(date)} open={adding} label={t("addTripShort")} closeLabel={t("close")} quiet />
+              <ButtonLink href={`/bookings/new?date=${date}`} className="inline-flex h-11 items-center gap-1.5 py-0 shadow-sm sm:h-9">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                {t("newBooking")}
+              </ButtonLink>
+            </>
           )
         }
       >

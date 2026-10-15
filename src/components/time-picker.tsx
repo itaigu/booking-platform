@@ -20,15 +20,26 @@ export function TimePicker({
   defaultValue = "09:00",
   lang,
   labels,
+  onChange,
 }: {
   name: string;
   defaultValue?: string;
   lang: Lang;
   labels: Labels;
+  /** Called with minutes since midnight. */
+  onChange?: (minutes: number) => void;
 }) {
   const [h0, m0] = defaultValue.split(":").map(Number);
-  const [hour, setHour] = useState(h0 >= 5 && h0 <= 22 ? h0 : 9);
-  const [minute, setMinute] = useState(MINUTES.includes(m0) ? m0 : 0);
+  const [hour, setHourState] = useState(h0 >= 5 && h0 <= 22 ? h0 : 9);
+  const [minute, setMinuteState] = useState(MINUTES.includes(m0) ? m0 : 0);
+  const setHour = (h: number) => {
+    setHourState(h);
+    onChange?.(h * 60 + minute);
+  };
+  const setMinute = (m: number) => {
+    setMinuteState(m);
+    onChange?.(hour * 60 + m);
+  };
   const chip = (on: boolean) =>
     `h-11 rounded-md text-sm font-medium tabular-nums sm:h-9 ${
       on ? "bg-sky-700 text-white" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"

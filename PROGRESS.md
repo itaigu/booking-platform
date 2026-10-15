@@ -55,6 +55,8 @@ The plan may change after talking with the team about what they really need.
 - Menu moved to a sidebar on the left (☰ button on phones). The calendar has a Day / Week switch; Day is the default.
 - Made the dashboard look and work more like professional charter software: grouped sidebar with a logo, a cleaner calendar header (tap the date to jump to any day), trip cards with booked/capacity and a status label (Full, Booked, Below min., Cancelled), maintenance blocks and a "now" line in the week view, a day-by-day list for the week on phones, and a tour form in sections with price boxes in USD and month/day lists for the season.
 - Extra hours are saved on private tours, but bookings don't add or charge them yet (needs an extra-hours counter on New booking and a quote_booking change).
+- Every trip is different: New booking now creates the trip itself, with its name, type (private or shared), boat, exact date and time, duration, turnaround time, guests included and extra guests, extra hours and prices, and shows the total as you fill it in. Tours are now optional templates that fill in the form (and are still used by Schedules). To add guests to a shared trip that is already on the calendar, use the button at the top of New booking. Database update: `20261015010000_one_off_trips.sql` (Claude ran it directly in Supabase).
+- Still to do: bookings on a one-off trip can't be moved to another date yet (the trip's date and time can't be edited yet either).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

@@ -5,14 +5,91 @@ import { translator } from "@/lib/i18n";
 import type { Availability } from "@/lib/types";
 import { Badge, Button, ButtonLink, Card, Field, Flash, Input, PageTitle } from "@/components/ui";
 import { BookingForm } from "./booking-form";
+import { TripBookingForm, type Template } from "./trip-booking-form";
+
+// Labels for the customer part of both forms, which run in the browser.
+const customerKeys = [
+  "customer", "name", "email", "phone", "language", "emergencyContact", "emergencyPhone", "channel",
+  "otaName", "otaReference", "occasion", "occasionHint", "specialRequests", "internalNotes", "details",
+  "channel_phone", "channel_whatsapp", "channel_walk_in", "channel_ota", "channel_other", "createBooking",
+] as const;
+const tripKeys = [
+  ...customerKeys,
+  "secTrip", "secTripDesc", "fromTour", "fromTourNone", "fromTourHint", "tripName", "tripNamePh", "kind",
+  "private", "shared", "privateDesc", "sharedTripDesc", "secWhen", "secWhenDesc", "date", "boat", "time",
+  "duration", "bufferMin", "bufferHint", "boatFree", "secPax", "paxIncluded", "paxIncludedHint", "basePrice",
+  "extraPax", "extraGuestPrice", "extraHours", "extraHourPrice", "paxThisBooking", "pricePerPerson",
+  "seatsThisTrip", "minGuests", "priceSummary", "lineCharter", "upTo", "total", "priceOverride",
+  "priceOverrideHint", "saving", "less", "more", "morning", "afternoon", "evening", "minutes",
+] as const;
 
 export default async function NewBookingPage({ searchParams }: PageProps<"/bookings/new">) {
   const sp = await searchParams;
   const { supabase, lang, t } = await pageContext(["admin", "office"]);
   const departureId = Number(sp.departure);
 
+  const date = isDay(sp.date as string) ? (sp.date as string) : todayLocal();
+  const tr = translator(lang);
+
+  // Default: a new trip with its own details, created together with the booking.
+  if (!departureId && sp.existing !== "1") {
+    const [{ data: tourData }, { data: boatData }] = await Promise.all([
+      supabase
+        .from("products")
+        .select("*, ticket_types(price, active), product_boats(boat_id)")
+        .eq("one_off", false)
+        .eq("active", true)
+        .order("name_es"),
+      supabase.from("boats").select("id, name, max_guests").eq("active", true).order("name"),
+    ]);
+    type Row = Omit<Template, "name" | "guest_price" | "boat_id"> & {
+      name_es: string;
+      name_en: string;
+      ticket_types: { price: number; active: boolean }[];
+      product_boats: { boat_id: number }[];
+    };
+    const templates: Template[] = ((tourData ?? []) as Row[]).map((p) => {
+      const prices = p.ticket_types.filter((x) => x.active).map((x) => Number(x.price));
+      return {
+        id: p.id,
+        name: p.name_es || p.name_en,
+        kind: p.kind,
+        duration_minutes: p.duration_minutes,
+        buffer_minutes: p.buffer_minutes,
+        min_guests: p.min_guests,
+        max_guests: p.max_guests,
+        base_price: p.base_price,
+        base_guests: p.base_guests,
+        extra_guest_price: p.extra_guest_price,
+        extra_hour_price: p.extra_hour_price,
+        guest_price: prices.length ? Math.max(...prices) : null,
+        boat_id: p.product_boats[0]?.boat_id ?? null,
+      };
+    });
+    const labels = Object.fromEntries(tripKeys.map((k) => [k, tr(k)]));
+
+    return (
+      <>
+        <PageTitle
+          actions={
+            <ButtonLink variant="secondary" href={`/bookings/new?existing=1&date=${date}`}>
+              {t("joinExisting")}
+            </ButtonLink>
+          }
+        >
+          {t("newBooking")}
+        </PageTitle>
+        {(boatData ?? []).length === 0 ? (
+          <Flash error={t("noBoats")} />
+        ) : (
+          <TripBookingForm templates={templates} boats={boatData ?? []} date={date} labels={labels} lang={lang} />
+        )}
+      </>
+    );
+  }
+
+  // Add guests to a trip that is already on the calendar.
   if (!departureId) {
-    const date = isDay(sp.date as string) ? (sp.date as string) : todayLocal();
     const { data } = await supabase
       .from("departure_availability")
       .select("*")
@@ -24,8 +101,11 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
 
     return (
       <>
-        <PageTitle>{t("newBooking")}: {t("chooseTrip")}</PageTitle>
+        <PageTitle actions={<ButtonLink variant="secondary" href={`/bookings/new?date=${date}`}>{t("newTripInstead")}</ButtonLink>}>
+          {t("newBooking")}: {t("chooseTrip")}
+        </PageTitle>
         <form className="mb-4 flex items-end gap-2" action="/bookings/new">
+          <input type="hidden" name="existing" value="1" />
           <Field label={t("date")}>
             <Input type="date" name="date" defaultValue={date} />
           </Field>
@@ -68,15 +148,8 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
     supabase.from("products").select("base_guests").eq("id", trip.product_id).single(),
   ]);
 
-  // Labels for the form, which runs in the browser.
-  const keys = [
-    "customer", "name", "email", "phone", "language", "emergencyContact", "emergencyPhone", "channel",
-    "otaName", "otaReference", "occasion", "occasionHint", "specialRequests", "internalNotes", "tickets",
-    "guests", "estimate", "priceOverride", "priceOverrideHint", "createBooking", "seatsLeft", "details",
-    "channel_phone", "channel_whatsapp", "channel_walk_in", "channel_ota", "channel_other", "baseGuests",
-  ] as const;
-  const tr = translator(lang);
-  const labels = Object.fromEntries(keys.map((k) => [k, tr(k)])) as Record<(typeof keys)[number], string>;
+  const bookingKeys = [...customerKeys, "tickets", "guests", "estimate", "priceOverride", "priceOverrideHint", "seatsLeft", "baseGuests"] as const;
+  const labels = Object.fromEntries(bookingKeys.map((k) => [k, tr(k)]));
 
   return (
     <>
