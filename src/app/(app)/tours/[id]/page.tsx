@@ -2,13 +2,13 @@ import { notFound } from "next/navigation";
 import { pageContext } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
 import { TourFields, type Product } from "@/components/tour-fields";
-import { Button, ButtonLink, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
+import { Button, ButtonLink, Card, Field, Flash, Input, MoneyInput, PageTitle, Select } from "@/components/ui";
 import { addPriceRule, deletePriceRule, saveBoatsForTour, saveTicketType, saveTour } from "../actions";
 
 export default async function TourPage({ params, searchParams }: PageProps<"/tours/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const { supabase, t } = await pageContext(["admin"]);
+  const { supabase, lang, t } = await pageContext(["admin"]);
 
   const [{ data: p }, { data: tickets }, { data: boats }, { data: linked }, { data: rules }] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).maybeSingle<Product>(),
@@ -19,18 +19,25 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
   ]);
   if (!p) notFound();
   const linkedIds = new Set((linked ?? []).map((l) => l.boat_id));
-  const ticketName = (tid: number | null) => (tickets ?? []).find((x) => x.id === tid)?.name_en ?? t("wholeTour");
+  const ticketName = (tid: number | null) => {
+    const tt = (tickets ?? []).find((x) => x.id === tid);
+    return tt ? tt.name_es || tt.name_en : t("wholeTour");
+  };
+  // Biggest boat linked to this tour, for tours saved before they had a guest limit.
+  const boatMax = Math.max(0, ...(boats ?? []).filter((b) => linkedIds.has(b.id)).map((b) => b.max_guests)) || undefined;
 
   return (
     <>
-      <PageTitle actions={<ButtonLink variant="secondary" href="/tours">‹ {t("tours")}</ButtonLink>}>{p.name_en}</PageTitle>
+      <PageTitle actions={<ButtonLink variant="secondary" href="/tours">‹ {t("tours")}</ButtonLink>}>{p.name_es || p.name_en}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
       <Card title={t("details")}>
         <form action={saveTour}>
           <input type="hidden" name="id" value={p.id} />
-          <TourFields p={p} t={t} />
-          <Button type="submit" className="mt-4">{t("save")}</Button>
+          <TourFields p={p} t={t} lang={lang} boatMax={boatMax} />
+          <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
+            <Button type="submit">{t("saveChanges")}</Button>
+          </div>
         </form>
       </Card>
 
@@ -55,7 +62,7 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
                 <input type="hidden" name="product_id" value={p.id} />
                 {tt && <input type="hidden" name="id" value={tt.id} />}
                 <Field label={t("name")}><Input name="name" defaultValue={tt?.name_es || tt?.name_en} placeholder="Adulto" required /></Field>
-                <Field label={t("price")}><Input name="price" type="number" step="0.01" min={0} defaultValue={tt?.price} required /></Field>
+                <Field label={t("price")}><MoneyInput name="price" defaultValue={tt?.price} required /></Field>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" name="active" defaultChecked={tt?.active ?? true} /> {t("active")}
                 </label>
@@ -89,7 +96,7 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
             <Select name="ticket_type_id">
               <option value="">{t("wholeTour")}</option>
               {(tickets ?? []).map((tt) => (
-                <option key={tt.id} value={tt.id}>{tt.name_en}</option>
+                <option key={tt.id} value={tt.id}>{tt.name_es || tt.name_en}</option>
               ))}
             </Select>
           </Field>

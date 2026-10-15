@@ -53,6 +53,8 @@ The plan may change after talking with the team about what they really need.
 - Simpler tour form: one name instead of English and Spanish, + and − counters for duration, guests included (1 to 4) and extra guests, and a price per extra hour. Start times are picked by tapping an hour and minutes instead of typing. Database update: `20261015000000_tour_options.sql` (Claude ran it directly in Supabase).
 - Connected Claude to Supabase.
 - Menu moved to a sidebar on the left (☰ button on phones). The calendar has a Day / Week switch; Day is the default.
+- Made the dashboard look and work more like professional charter software: grouped sidebar with a logo, a cleaner calendar header (tap the date to jump to any day), trip cards with booked/capacity and a status label (Full, Booked, Below min., Cancelled), maintenance blocks and a "now" line in the week view, a day-by-day list for the week on phones, and a tour form in sections with price boxes in USD and month/day lists for the season.
+- Extra hours are saved on private tours, but bookings don't add or charge them yet (needs an extra-hours counter on New booking and a quote_booking change).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

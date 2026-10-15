@@ -2,7 +2,7 @@ import Link from "next/link";
 import { pageContext } from "@/lib/auth";
 import { fmtMoney } from "@/lib/format";
 import { TourFields, type Product } from "@/components/tour-fields";
-import { AddToggle, Badge, Button, Card, Flash, PageTitle } from "@/components/ui";
+import { AddToggle, Badge, Button, ButtonLink, Card, Flash, PageTitle } from "@/components/ui";
 import { saveTour } from "./actions";
 
 export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
@@ -14,13 +14,16 @@ export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
 
   return (
     <>
-      <PageTitle actions={<AddToggle href="/tours" open={adding} label={t("newTour")} />}>{t("tours")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/tours" open={adding} label={t("newTour")} closeLabel={t("close")} />}>{t("tours")}</PageTitle>
       <Flash error={sp.error as string | undefined} />
       {adding && (
         <Card title={t("newTour")}>
           <form action={saveTour}>
-            <TourFields t={t} />
-            <Button type="submit" className="mt-4">{t("add")}</Button>
+            <TourFields t={t} lang={lang} />
+            <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
+              <ButtonLink variant="secondary" href="/tours">{t("cancel")}</ButtonLink>
+              <Button type="submit">{t("createTour")}</Button>
+            </div>
           </form>
         </Card>
       )}

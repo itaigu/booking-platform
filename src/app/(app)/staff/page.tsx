@@ -15,7 +15,7 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
 
   return (
     <>
-      <PageTitle actions={<AddToggle href="/staff" open={adding} label={t("newStaff")} />}>{t("staff")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/staff" open={adding} label={t("newStaff")} closeLabel={t("close")} />}>{t("staff")}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
       {adding && (

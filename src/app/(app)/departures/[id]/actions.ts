@@ -5,7 +5,9 @@ import { actionContext, str } from "@/lib/actions";
 
 export async function cancelTrip(form: FormData) {
   const id = str(form, "id");
-  const { supabase, fail, go } = await actionContext(`/departures/${id}`, ["admin", "office"]);
+  // Keep "came from the week view" so the back button returns there.
+  const q = str(form, "view") === "week" ? "?view=week" : "";
+  const { supabase, fail, go } = await actionContext(`/departures/${id}${q}`, ["admin", "office"]);
   const { count } = await supabase
     .from("bookings")
     .select("id", { count: "exact", head: true })
@@ -15,5 +17,5 @@ export async function cancelTrip(form: FormData) {
   const { error } = await supabase.from("departures").update({ status: "cancelled" }).eq("id", id);
   if (error) fail(error.message);
   revalidatePath("/calendar");
-  go(`/departures/${id}`, {});
+  go(`/departures/${id}${q}`, {});
 }
