@@ -29,7 +29,7 @@ export default async function DeparturePage({ params, searchParams }: PageProps<
       <PageTitle
         actions={
           <>
-            <ButtonLink variant="secondary" href={`/calendar?date=${localDayOf(trip.starts_at)}`}>
+            <ButtonLink variant="secondary" href={`/calendar?date=${localDayOf(trip.starts_at)}${sp.view === "week" ? "&view=week" : ""}`}>
               ‹ {t("calendar")}
             </ButtonLink>
             {canBook(staff.role) && scheduled && trip.seats_left > 0 && (
@@ -100,6 +100,7 @@ export default async function DeparturePage({ params, searchParams }: PageProps<
           ) : (
             <form action={cancelTrip}>
               <input type="hidden" name="id" value={trip.id} />
+              {sp.view === "week" && <input type="hidden" name="view" value="week" />}
               <Button variant="danger" type="submit">{t("cancelTrip")}</Button>
             </form>
           )}

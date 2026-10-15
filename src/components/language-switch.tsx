@@ -14,7 +14,7 @@ export function LanguageSwitch({ lang }: { lang: Lang }) {
   return (
     <form action={setLang}>
       <input type="hidden" name="lang" value={other} />
-      <button type="submit" className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium hover:bg-slate-100">
+      <button type="submit" className="min-h-11 rounded-md px-2 text-xs font-medium text-slate-600 hover:bg-slate-100 lg:min-h-8">
         {other === "en" ? "English" : "Español"}
       </button>
     </form>

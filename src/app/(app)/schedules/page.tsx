@@ -1,5 +1,6 @@
+import { TimePicker } from "@/components/time-picker";
 import { pageContext } from "@/lib/auth";
-import { addDays, todayLocal } from "@/lib/format";
+import { addDays, fmtClock, todayLocal } from "@/lib/format";
 import type { Key } from "@/lib/i18n";
 import { AddToggle, Badge, Button, Card, Field, Flash, Input, PageTitle, Select } from "@/components/ui";
 import { deleteSchedule, generateTrips, saveSchedule } from "./actions";
@@ -19,7 +20,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
 
   return (
     <>
-      <PageTitle actions={<AddToggle href="/schedules" open={adding} label={t("newSchedule")} />}>{t("schedules")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/schedules" open={adding} label={t("newSchedule")} closeLabel={t("close")} />}>{t("schedules")}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
       {adding && (
@@ -41,7 +42,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
                   ))}
                 </Select>
               </Field>
-              <Field label={t("startTime")}><Input type="time" name="start_time" required /></Field>
+              <Field label={t("startTime")} group className="sm:col-span-3 sm:max-w-md"><TimePicker name="start_time" lang={lang} labels={{ morning: t("morning"), afternoon: t("afternoon"), evening: t("evening"), minutes: t("minutes") }} /></Field>
               <Field label={t("validFrom")}><Input type="date" name="valid_from" defaultValue={today} required /></Field>
               <Field label={t("validTo")}><Input type="date" name="valid_to" /></Field>
             </div>
@@ -64,7 +65,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
           <Card key={s.id}>
             <div className="mb-3 flex flex-wrap items-center gap-3">
               <strong className="flex-1">
-                {lang === "es" ? prod?.name_es : prod?.name_en} · {String(s.start_time).slice(0, 5)}
+                {lang === "es" ? prod?.name_es : prod?.name_en} · {fmtClock(Number(String(s.start_time).slice(0, 2)) * 60 + Number(String(s.start_time).slice(3, 5)), lang)}
               </strong>
               <span className="text-sm">{(s.weekdays as number[]).map((d) => t(dayKeys[d])).join(", ")}</span>
               <span className="text-sm text-slate-600">{(s.boats as { name: string } | null)?.name ?? t("anyBoat")}</span>

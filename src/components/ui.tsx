@@ -19,13 +19,28 @@ export function Card({ title, children, className = "" }: { title?: ReactNode; c
   );
 }
 
-export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
+// `group` renders a <div> instead of a <label>, for button controls like
+// Stepper and TimePicker (a label would forward clicks to its first button).
+export function Field({
+  label,
+  hint,
+  children,
+  group,
+  className = "",
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  children: ReactNode;
+  group?: boolean;
+  className?: string;
+}) {
+  const Tag = group ? "div" : "label";
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <Tag className={`flex flex-col gap-1 text-sm ${className}`}>
       <span className="font-medium text-slate-700">{label}</span>
       {children}
       {hint && <span className="text-xs text-slate-500">{hint}</span>}
-    </label>
+    </Tag>
   );
 }
 
@@ -96,19 +111,49 @@ export function Grid({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>;
 }
 
-// Small square "+" button for the page title. Opens the "add" form by adding
-// ?add=1 to the page link; shows "×" to close it again.
-export function AddToggle({ href, open, label }: { href: string; open: boolean; label: string }) {
+// Blue "+ New …" button for the page title. Opens the "add" form by adding
+// add=1 to the page link; shows "×" to close it again.
+export function AddToggle({ href, open, label, closeLabel }: { href: string; open: boolean; label: string; closeLabel: string }) {
   return (
     <Link
-      href={open ? href : `${href}?add=1`}
-      title={label}
-      aria-label={label}
-      className={`flex h-10 w-10 items-center justify-center rounded-md text-2xl leading-none ${
-        open ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" : "bg-sky-700 text-white hover:bg-sky-800"
+      href={open ? href : `${href}${href.includes("?") ? "&" : "?"}add=1`}
+      title={open ? closeLabel : label}
+      aria-label={open ? closeLabel : label}
+      className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-md text-sm font-medium sm:h-9 ${
+        open
+          ? "w-11 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 sm:w-9"
+          : "min-w-11 bg-sky-700 px-3 text-white shadow-sm hover:bg-sky-800"
       }`}
     >
-      {open ? "×" : "+"}
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
+        <path d={open ? "M6 6l12 12M18 6L6 18" : "M12 5v14M5 12h14"} />
+      </svg>
+      {!open && <span className="hidden sm:inline">{label}</span>}
     </Link>
+  );
+}
+
+// A big tappable option (radio or checkbox inside a <label>).
+export const choiceCard =
+  "relative flex cursor-pointer flex-col gap-1 rounded-lg border border-slate-300 bg-white p-4 hover:border-slate-400 has-checked:border-sky-700 has-checked:bg-sky-50 has-checked:ring-1 has-checked:ring-sky-700 has-focus-visible:ring-2 has-focus-visible:ring-sky-500";
+
+// Price box with "$" in front and "USD" after.
+export function MoneyInput({ className = "", ...props }: ComponentProps<"input">) {
+  return (
+    <div
+      className={`flex h-[42px] w-full max-w-[14rem] items-stretch rounded-md border border-slate-300 bg-white focus-within:border-sky-600 focus-within:ring-1 focus-within:ring-sky-600 ${className}`}
+    >
+      <span className="flex items-center pl-3 text-slate-500">$</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        step="0.01"
+        min={0}
+        placeholder="0.00"
+        {...props}
+        className="w-full min-w-0 [appearance:textfield] bg-transparent px-2 text-base text-slate-900 tabular-nums focus:outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+      <span className="flex items-center pr-3 text-xs font-medium text-slate-500">USD</span>
+    </div>
   );
 }

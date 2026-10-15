@@ -64,12 +64,52 @@ export function localMinutes(iso: string) {
   return get("hour") * 60 + get("minute");
 }
 
+// "miércoles, 14 de octubre" → "Miércoles, 14 de octubre" (only the first letter).
+export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const locale = (lang: Lang) => (lang === "es" ? "es-MX" : "en-US");
+
 export function fmtLongDate(day: string, lang: Lang) {
-  return new Intl.DateTimeFormat(lang === "es" ? "es-MX" : "en-US", {
+  return cap(
+    new Intl.DateTimeFormat(locale(lang), {
+      timeZone: TZ,
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(dayStart(day))),
+  );
+}
+
+// "Mié 14 de oct" / "Wed, Oct 14"
+export function fmtDayShort(day: string, lang: Lang) {
+  return cap(
+    new Intl.DateTimeFormat(locale(lang), { timeZone: TZ, weekday: "short", day: "numeric", month: "short" }).format(
+      new Date(dayStart(day)),
+    ),
+  );
+}
+
+// "12–18 de oct de 2026" / "Oct 12 – 18, 2026"
+export function fmtWeekRange(from: string, to: string, lang: Lang, withYear = true) {
+  return new Intl.DateTimeFormat(locale(lang), {
     timeZone: TZ,
-    weekday: "long",
     day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(dayStart(day)));
+    month: "short",
+    ...(withYear ? { year: "numeric" } : {}),
+  }).formatRange(new Date(dayStart(from)), new Date(dayStart(to)));
+}
+
+// Minutes since midnight as a clock time: 1050 → "5:30 p.m." ("5 p.m." when short).
+// Written by hand so the server and the browser always print the same thing.
+export function fmtClock(min: number, lang: Lang, short = false) {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  const ap = h < 12 ? (lang === "es" ? "a.m." : "AM") : lang === "es" ? "p.m." : "PM";
+  return `${h % 12 || 12}${short && m === 0 ? "" : `:${String(m).padStart(2, "0")}`} ${ap}`;
+}
+
+// Monday of the week a day falls in.
+export function weekStartOf(day: string) {
+  return addDays(day, -((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7));
 }

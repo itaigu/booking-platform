@@ -15,7 +15,7 @@ export default async function BoatsPage({ searchParams }: PageProps<"/boats">) {
 
   return (
     <>
-      <PageTitle actions={<AddToggle href="/boats" open={adding} label={t("newBoat")} />}>{t("boats")}</PageTitle>
+      <PageTitle actions={<AddToggle href="/boats" open={adding} label={t("newBoat")} closeLabel={t("close")} />}>{t("boats")}</PageTitle>
       <Flash error={sp.error as string | undefined} ok={sp.ok as string | undefined} />
 
       {adding && (
