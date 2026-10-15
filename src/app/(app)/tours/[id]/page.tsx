@@ -54,8 +54,7 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
               <form key={tt?.id ?? "new"} action={saveTicketType} className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:items-end">
                 <input type="hidden" name="product_id" value={p.id} />
                 {tt && <input type="hidden" name="id" value={tt.id} />}
-                <Field label={t("nameEn")}><Input name="name_en" defaultValue={tt?.name_en} placeholder="Adult" required /></Field>
-                <Field label={t("nameEs")}><Input name="name_es" defaultValue={tt?.name_es} placeholder="Adulto" required /></Field>
+                <Field label={t("name")}><Input name="name" defaultValue={tt?.name_es || tt?.name_en} placeholder="Adulto" required /></Field>
                 <Field label={t("price")}><Input name="price" type="number" step="0.01" min={0} defaultValue={tt?.price} required /></Field>
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" name="active" defaultChecked={tt?.active ?? true} /> {t("active")}

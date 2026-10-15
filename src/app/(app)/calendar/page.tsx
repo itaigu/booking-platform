@@ -1,3 +1,4 @@
+import { TimePicker } from "@/components/time-picker";
 import { canBook, pageContext } from "@/lib/auth";
 import { addDays, dayStart, fmtLongDate, isDay, todayLocal } from "@/lib/format";
 import type { Availability } from "@/lib/types";
@@ -59,7 +60,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
 
       {adding && canBook(staff.role) && (
         <Card title={t("addTrip")}>
-          <form action={createTrip} className="grid grid-cols-1 gap-3 sm:grid-cols-5 sm:items-end">
+          <form action={createTrip} className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
             <Field label={t("tour")}>
               <Select name="product_id" required>
                 {(products ?? []).map((p) => (
@@ -77,10 +78,10 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             <Field label={t("date")}>
               <Input type="date" name="date" defaultValue={date} required />
             </Field>
-            <Field label={t("time")}>
-              <Input type="time" name="time" required />
+            <Field label={t("time")} group className="sm:col-span-3 sm:max-w-md">
+              <TimePicker name="time" />
             </Field>
-            <Button type="submit">{t("add")}</Button>
+            <Button type="submit" className="sm:w-fit">{t("add")}</Button>
           </form>
         </Card>
       )}

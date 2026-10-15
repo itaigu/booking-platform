@@ -47,6 +47,9 @@ The plan may change after talking with the team about what they really need.
 - Added a "change password" page: click your name at the top right.
 - Calendar now shows one day at a time, with hour lines, a column per boat and a color per boat.
 
+### 2026-10-15
+- Simpler tour form: one name instead of English and Spanish, + and − counters for duration, guests included (1 to 4) and extra guests, and a price per extra hour. Start times are picked by tapping an hour and minutes instead of typing. Database update: `20261015000000_tour_options.sql`.
+
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
 - Do hotels collect payment from the guest, or does the guest pay us?

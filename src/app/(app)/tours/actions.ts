@@ -8,17 +8,24 @@ export async function saveTour(form: FormData) {
   const back = id ? `/tours/${id}` : "/tours";
   const { supabase, fail, go, lang } = await actionContext(back, ["admin"]);
   const kind = str(form, "kind");
+  const name = str(form, "name");
+  const isPrivate = kind === "private";
+  const baseGuests = num(form, "base_guests") ?? 4;
   const row = {
-    name_en: str(form, "name_en"),
-    name_es: str(form, "name_es"),
+    // One name for both languages.
+    name_en: name,
+    name_es: name,
     kind,
     duration_minutes: num(form, "duration_minutes"),
     buffer_minutes: num(form, "buffer_minutes") ?? 0,
-    min_guests: num(form, "min_guests") ?? 1,
-    max_guests: num(form, "max_guests"),
-    base_price: num(form, "base_price"),
-    base_guests: kind === "private" ? num(form, "base_guests") : null,
-    extra_guest_price: num(form, "extra_guest_price"),
+    max_extra_hours: num(form, "max_extra_hours") ?? 0,
+    extra_hour_price: num(form, "extra_hour_price"),
+    min_guests: isPrivate ? 1 : (num(form, "min_guests") ?? 1),
+    // Private: guests included plus extra guests allowed. Shared: seats per trip.
+    max_guests: isPrivate ? baseGuests + (num(form, "extra_guests") ?? 0) : num(form, "shared_max_guests"),
+    base_price: isPrivate ? num(form, "base_price") : null,
+    base_guests: isPrivate ? baseGuests : null,
+    extra_guest_price: isPrivate ? num(form, "extra_guest_price") : null,
     season_start: strOrNull(form, "season_start"),
     season_end: strOrNull(form, "season_end"),
     active: form.get("active") === "on",
@@ -58,8 +65,8 @@ export async function saveTicketType(form: FormData) {
   const { supabase, fail, go } = await actionContext(back, ["admin"]);
   const row = {
     product_id: Number(productId),
-    name_en: str(form, "name_en"),
-    name_es: str(form, "name_es"),
+    name_en: str(form, "name"),
+    name_es: str(form, "name"),
     price: num(form, "price"),
     active: form.get("active") === "on",
   };

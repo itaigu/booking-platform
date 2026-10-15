@@ -1,3 +1,4 @@
+import { TimePicker } from "@/components/time-picker";
 import { pageContext } from "@/lib/auth";
 import { addDays, todayLocal } from "@/lib/format";
 import type { Key } from "@/lib/i18n";
@@ -41,7 +42,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
                   ))}
                 </Select>
               </Field>
-              <Field label={t("startTime")}><Input type="time" name="start_time" required /></Field>
+              <Field label={t("startTime")} group className="sm:col-span-3 sm:max-w-md"><TimePicker name="start_time" /></Field>
               <Field label={t("validFrom")}><Input type="date" name="valid_from" defaultValue={today} required /></Field>
               <Field label={t("validTo")}><Input type="date" name="valid_to" /></Field>
             </div>

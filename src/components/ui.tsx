@@ -19,13 +19,28 @@ export function Card({ title, children, className = "" }: { title?: ReactNode; c
   );
 }
 
-export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
+// `group` renders a <div> instead of a <label>, for button controls like
+// Stepper and TimePicker (a label would forward clicks to its first button).
+export function Field({
+  label,
+  hint,
+  children,
+  group,
+  className = "",
+}: {
+  label: ReactNode;
+  hint?: ReactNode;
+  children: ReactNode;
+  group?: boolean;
+  className?: string;
+}) {
+  const Tag = group ? "div" : "label";
   return (
-    <label className="flex flex-col gap-1 text-sm">
+    <Tag className={`flex flex-col gap-1 text-sm ${className}`}>
       <span className="font-medium text-slate-700">{label}</span>
       {children}
       {hint && <span className="text-xs text-slate-500">{hint}</span>}
-    </label>
+    </Tag>
   );
 }
 

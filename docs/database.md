@@ -19,7 +19,7 @@ The database lives in Supabase. Its full definition is in
 These hold no matter which screen or channel a booking comes from:
 
 - **No overbooking.** A shared tour can't sell more seats than it has. A private
-  charter takes only one booking.
+  charter takes only one booking, of up to its guests included plus extra guests allowed.
 - **No double-booked boats.** A boat can't have two trips that overlap,
   including the cleaning and fueling time after each trip.
 - **One hotel code, one booking.** A hotel can't use the same code twice.
