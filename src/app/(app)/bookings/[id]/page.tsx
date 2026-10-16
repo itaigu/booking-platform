@@ -5,8 +5,10 @@ import { fmtDate, fmtDateTime, fmtMoney, TZ_OFFSET } from "@/lib/format";
 import type { Availability } from "@/lib/types";
 import { ChangeHistory, type Change } from "@/components/change-history";
 import { EditTripForm } from "@/components/edit-trip-form";
+import { PaymentsCard, type Payment, type PaymentLink } from "@/components/payments-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Stepper } from "@/components/stepper";
+import { getStripe } from "@/lib/stripe";
 import { Badge, Button, ButtonLink, Card, Field, Flash, Grid, Input, MoneyInput, PageTitle, Select, Textarea } from "@/components/ui";
 import { changeGuests, makeHotelBooking, rescheduleBooking, setBookingStatus, updateBooking, updateHotelDetails } from "../actions";
 
@@ -62,7 +64,17 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const b = data as unknown as Booking;
 
   const editable = canBook(staff.role);
-  const [{ data: trip }, { data: product }, { data: boatData }, { count: customerBookings }, { data: history }, { data: commission }, { data: hotelData }] = await Promise.all([
+  const [
+    { data: trip },
+    { data: product },
+    { data: boatData },
+    { count: customerBookings },
+    { data: history },
+    { data: commission },
+    { data: hotelData },
+    { data: payments },
+    { data: links },
+  ] = await Promise.all([
     supabase.from("departure_availability").select("*").eq("id", b.departure_id).single<Availability>(),
     supabase
       .from("departures")
@@ -90,6 +102,16 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
     editable && b.channel !== "hotel"
       ? supabase.from("hotels").select("id, name, default_commission_pct").eq("active", true).order("name")
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("payments")
+      .select("id, kind, method, amount, note, created_at, staff(full_name)")
+      .eq("booking_id", b.id)
+      .order("created_at"),
+    supabase
+      .from("payment_links")
+      .select("id, amount, url, status, created_at, paid_at")
+      .eq("booking_id", b.id)
+      .order("created_at", { ascending: false }),
   ]);
   const hotels = (hotelData ?? []) as { id: number; name: string; default_commission_pct: number }[];
   const boats = boatData ?? [];
@@ -192,6 +214,19 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
           </tbody>
         </table>
       </Card>
+
+      <PaymentsCard
+        bookingId={b.id}
+        total={Number(b.total_price)}
+        confirmed={b.status === "confirmed"}
+        phone={b.customers.phone}
+        payments={(payments ?? []) as unknown as Payment[]}
+        links={(links ?? []) as PaymentLink[]}
+        role={staff.role}
+        stripeReady={!!getStripe()}
+        lang={lang}
+        t={t}
+      />
 
       {editable && b.channel === "hotel" && (
         <Card title={`${t("hotel")} · ${b.hotels?.name ?? ""}`}>

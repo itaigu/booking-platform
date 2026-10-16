@@ -55,10 +55,10 @@ export function ChangeHistory({
   const show = (table: string, field: string, v: unknown): string => {
     if (v === null || v === undefined || v === "") return "—";
     if (money.has(field)) return fmtMoney(v as number);
-    if (times.has(field)) return fmtDateTime(String(v), lang);
+    if (times.has(field) || (table === "payment_links" && field === "paid_at")) return fmtDateTime(String(v), lang);
     if (field === "boat_id") return boats.get(Number(v)) ?? String(v);
     if (field === "status") {
-      const group = table === "departures" ? "dep" : table === "commissions" ? "comm" : "status";
+      const group = table === "departures" ? "dep" : table === "commissions" ? "comm" : table === "payment_links" ? "link" : "status";
       return t(`${group}_${v}` as Key) ?? String(v);
     }
     const s = String(v);
@@ -71,9 +71,21 @@ export function ChangeHistory({
         ? `${t("customer")} · `
         : table === "commissions" && (field === "status" || field === "paid_at")
           ? `${t("commission")} · `
-          : "";
+          : table === "payment_links"
+            ? `${t("paymentLink")} · `
+            : "";
   const created = (table: string) =>
-    t(table === "bookings" ? "histCreated" : table === "payments" ? "histPayment" : table === "commissions" ? "histCommission" : "histAdded");
+    t(
+      table === "bookings"
+        ? "histCreated"
+        : table === "payments"
+          ? "histPayment"
+          : table === "commissions"
+            ? "histCommission"
+            : table === "payment_links"
+              ? "histPaymentLink"
+              : "histAdded",
+    );
 
   return (
     <ol className="space-y-3 text-sm">

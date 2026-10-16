@@ -104,3 +104,17 @@ These hold no matter which screen or channel a booking comes from:
 empty PostgreSQL database and checks these rules. GitHub runs it on every
 pull request (`.github/workflows/checks.yml`), together with the code checks.
 Never point it at the real Supabase project.
+
+## Payments (`20261016020000_stripe_payments.sql`)
+
+- **Payment links:** `payment_links` holds each Stripe link staff create for a
+  booking (a deposit or the rest), with its amount and whether it is open,
+  paid or cancelled. Admin and office create and cancel them; dock can see them.
+- **Stripe tells us when a link is paid:** the webhook (`/api/stripe/webhook`)
+  calls `record_stripe_payment`, which adds the payment and marks the link
+  paid. Only the secret key can call it, and the same Stripe payment is never
+  recorded twice.
+- **Payments can't be edited.** Admin, office and dock record payments taken in
+  person (cash, card at the dock, other), as a payment, tip or refund, under
+  their own name. Only an admin can delete one recorded by mistake, and nobody
+  can add or delete a Stripe payment by hand.

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { actionContext, num, str } from "@/lib/actions";
 import { isDay, TZ_OFFSET } from "@/lib/format";
+import { closeOpenLinks } from "@/lib/payments";
 
 // Only go back to a booking or trip page, never anywhere else.
 const safeBack = (path: string, fallback: string) =>
@@ -41,6 +42,13 @@ export async function cancelTrip(form: FormData) {
     p_weather: str(form, "reason") === "weather",
   });
   if (error) fail(error.message);
+  // Its bookings can't be paid any more.
+  const { data: cancelled } = await supabase.from("bookings").select("id").eq("departure_id", Number(id));
+  try {
+    for (const b of cancelled ?? []) await closeOpenLinks(supabase, b.id);
+  } catch (e) {
+    fail(e instanceof Error ? e.message : String(e));
+  }
   revalidatePath("/calendar");
   const ok = lang === "es" ? `Salida cancelada · ${data} reservas canceladas` : `Trip cancelled · ${data} bookings cancelled`;
   go(`/departures/${id}${q}`, { ok });

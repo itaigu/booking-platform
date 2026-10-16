@@ -12,7 +12,7 @@ set client_min_messages = notice;
 -- ---------------------------------------------------------------------------
 
 create schema tests;
-grant usage on schema tests to anon, authenticated;
+grant usage on schema tests to anon, authenticated, service_role;
 
 -- Fails unless the condition holds.
 create function tests.ok(cond boolean, what text) returns void language plpgsql as $$
@@ -363,6 +363,60 @@ select tests.ok((select status = 'weather_cancelled' from departures where id = 
 select tests.ok((select bool_and(status = 'cancelled' and cancelled_at is not null) from bookings where departure_id = :d3),
                 'bad weather: every booking cancelled with its date');
 select tests.fails(format('select cancel_departure(%s)', :d3), 'already cancelled', 'no cancelling twice');
+
+
+-- ---------------------------------------------------------------------------
+-- Payments and Stripe payment links
+-- ---------------------------------------------------------------------------
+
+select tests.login('dock');
+insert into payments (booking_id, method, amount, recorded_by)
+values (:b1, 'cash', 50, '00000000-0000-0000-0000-00000000000d');
+select tests.ok((select count(*) = 1 from payments where method = 'cash'), 'dock: records a cash payment');
+select tests.fails(format($$insert into payments (booking_id, method, amount, stripe_payment_id, recorded_by)
+  values (%s, 'stripe', 50, 'pi_fake', '00000000-0000-0000-0000-00000000000d')$$, :b1),
+  'row-level security', 'nobody records a Stripe payment by hand');
+select tests.fails(format($$insert into payments (booking_id, method, amount, recorded_by)
+  values (%s, 'cash', 50, '00000000-0000-0000-0000-00000000000b')$$, :b1),
+  'row-level security', 'a payment is recorded under your own name');
+select tests.fails(format($$insert into payment_links (booking_id, amount, stripe_link_id, url)
+  values (%s, 100, 'plink_dock', 'https://x')$$, :b1), 'row-level security', 'dock: cannot create payment links');
+
+select tests.login('office');
+select tests.fails('update payments set amount = 1', 'permission denied', 'payments cannot be edited');
+delete from payments;
+select tests.ok((select count(*) = 1 from payments), 'office: cannot delete payments');
+insert into payment_links (booking_id, amount, stripe_link_id, url, created_by)
+values (:b1, 100, 'plink_1', 'https://buy.stripe.com/test_1', '00000000-0000-0000-0000-00000000000b');
+select tests.fails($$update payment_links set status = 'paid', paid_at = now()$$, 'row-level security',
+                   'office: cannot mark a link paid');
+select tests.fails($$select record_stripe_payment('plink_1', 'pi_1', 100)$$, 'permission denied',
+                   'only the Stripe webhook records Stripe payments');
+
+reset role;
+set role service_role;
+select tests.ok(record_stripe_payment('plink_1', 'pi_1', 100), 'webhook: link paid');
+select tests.ok(record_stripe_payment('plink_1', 'pi_1', 100), 'webhook: the same payment again is fine');
+select tests.ok(not record_stripe_payment('plink_other', 'pi_2', 100), 'webhook: unknown link is ignored');
+reset role;
+set role authenticated;
+
+select tests.login('office');
+select tests.ok((select count(*) = 1 from payments where stripe_payment_id = 'pi_1' and amount = 100 and booking_id = :b1),
+                'webhook: the payment is recorded once');
+select tests.ok((select status = 'paid' and paid_at is not null from payment_links where stripe_link_id = 'plink_1'),
+                'webhook: the link shows as paid');
+update payment_links set status = 'cancelled';
+select tests.ok((select status = 'paid' from payment_links where stripe_link_id = 'plink_1'), 'office: cannot cancel a paid link');
+
+select tests.login('admin');
+delete from payments where method = 'stripe';
+select tests.ok((select count(*) = 1 from payments where method = 'stripe'), 'admin: cannot delete a Stripe payment');
+delete from payments where method = 'cash';
+select tests.ok((select count(*) = 0 from payments where method = 'cash'), 'admin: deletes a cash payment recorded by mistake');
+
+select tests.login('crew');
+select tests.ok((select count(*) = 0 from payment_links), 'crew: no access to payment links');
 
 reset role;
 \o
