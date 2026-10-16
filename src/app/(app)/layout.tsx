@@ -12,7 +12,6 @@ const nav: { href: string; key: Key; roles: Role[]; group: "ops" | "setup" }[] =
   { href: "/commissions", key: "commissions", roles: ["admin", "office"], group: "ops" },
   { href: "/tours", key: "tours", roles: ["admin"], group: "setup" },
   { href: "/boats", key: "boats", roles: ["admin"], group: "setup" },
-  { href: "/schedules", key: "schedules", roles: ["admin"], group: "setup" },
   { href: "/hotels", key: "hotels", roles: ["admin"], group: "setup" },
   { href: "/staff", key: "staff", roles: ["admin"], group: "setup" },
 ];

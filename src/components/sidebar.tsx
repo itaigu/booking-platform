@@ -12,7 +12,6 @@ const icons: Record<string, ReactNode> = {
   "/bookings": <path d="M6 3h9l3 3v15H6zM9 9h6M9 13h6M9 17h4" />,
   "/tours": <path d="M12 3v14M12 4l7 10h-7M5 14h7M3 18c2 2 4 2 6 0 2 2 4 2 6 0 2 2 4 2 6 0" />,
   "/boats": <path d="M3 15h18l-3 5H6zM12 4v11M12 5l6 8h-6" />,
-  "/schedules": <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" />,
   "/commissions": <path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.6 4.5 3 4.5 1.4 4.5 3.2-2 3.3-4.5 3.3-4.5-1.3-4.5-3" />,
   "/hotels": <path d="M4 21V4h11v17M15 9h5v12M2 21h20M8 8h3M8 12h3M8 16h3" />,
   "/staff": <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c0-4 3-6 7-6s7 2 7 6M17 3a4 4 0 0 1 0 8M19 15c2 1 3 3 3 6" />,

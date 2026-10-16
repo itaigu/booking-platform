@@ -34,5 +34,4 @@ select id, 'Your Name', 'admin', 'es' from auth.users where email = 'you@example
 1. **Boats**: add each boat with its max guests.
 2. **Tours**: add each tour, tick which boats can run it, and add ticket types
    (Adult, Child…) for shared tours.
-3. **Schedules**: add the regular times, then click **Create trips** to fill the calendar.
-4. **Staff**: add the rest of the team with their role.
+3. **Staff**: add the rest of the team with their role.
