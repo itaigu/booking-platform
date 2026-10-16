@@ -35,7 +35,7 @@ The plan may change after talking with the team about what they really need.
 | 1. Set up the basics | Done |
 | 2. Core staff dashboard | In progress |
 | 3. Hotel bookings and commissions | In progress |
-| 4. Everything else, switch off Rezdy | Not started |
+| 4. Everything else, switch off Rezdy | In progress (Stripe payments) |
 
 ## Log
 
@@ -85,6 +85,12 @@ The plan may change after talking with the team about what they really need.
   - Database update: `20261016010000_hotel_bookings.sql` (Claude ran it in Supabase on 2026-10-16 with itai's OK).
 - The Schedules section was taken out (itai's call): every trip is different, so trips are created from New booking. Nothing changed in the database, so it can be put back.
 - A booking taken another way (phone, WhatsApp…) can be turned into a hotel booking from its page ("Cambiar a reserva de hotel"), with the hotel, its code and the commission %.
+- Stripe payments (step 4 starts):
+  - Every booking has a Payments section: total, paid, balance due, and the list of payments (who, when, how).
+  - Admin and office create a Stripe payment link for the balance or for less (a deposit), then copy it or send it by WhatsApp. When the customer pays, the payment shows up on its own and the link is marked paid.
+  - Cancelling a booking (or a whole trip) switches off its open links. A link can also be cancelled by hand.
+  - Admin, office and dock record payments taken in person: cash, card at the dock or other, as a payment, tip or refund. Payments can't be edited; only an admin can delete one recorded by mistake.
+  - Database update: `20261016020000_stripe_payments.sql`. Stripe keys go in Vercel: see [docs/setup.md](docs/setup.md#5-connect-stripe-payment-links).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

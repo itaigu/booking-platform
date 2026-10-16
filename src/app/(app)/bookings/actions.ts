@@ -6,6 +6,7 @@ import { actionContext, num, str } from "@/lib/actions";
 import { canBook, getStaff } from "@/lib/auth";
 import { isDay, TZ_OFFSET } from "@/lib/format";
 import { getLang, translateError } from "@/lib/i18n";
+import { closeOpenLinks } from "@/lib/payments";
 import { createClient } from "@/lib/supabase/server";
 
 // Live price while staff fill in the booking form.
@@ -156,8 +157,17 @@ export async function setBookingStatus(form: FormData) {
   const id = str(form, "id");
   const back = `/bookings/${id}`;
   const { supabase, fail, go } = await actionContext(back, ["admin", "office"]);
-  const { error } = await supabase.from("bookings").update({ status: str(form, "status") }).eq("id", id);
+  const status = str(form, "status");
+  const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
   if (error) fail(error.message);
+  // A cancelled booking can't be paid any more.
+  if (status === "cancelled") {
+    try {
+      await closeOpenLinks(supabase, Number(id));
+    } catch (e) {
+      fail(e instanceof Error ? e.message : String(e));
+    }
+  }
   revalidatePath("/calendar");
   go(back, {});
 }
