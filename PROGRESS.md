@@ -82,7 +82,7 @@ The plan may change after talking with the team about what they really need.
   - Commissions page (admin and office): totals per hotel for a month (by trip date), the bookings behind each total, "Mark as paid" with the payment date (only trips that already happened), "Undo payment" (admin), and CSV download for Excel.
   - Bookings can be searched by hotel code.
   - Not done yet: a hotel price list. For now the hotel price is typed in each booking.
-  - Database update: `20261016010000_hotel_bookings.sql` (not yet in Supabase; Claude applies it once itai says OK).
+  - Database update: `20261016010000_hotel_bookings.sql` (Claude ran it in Supabase on 2026-10-16 with itai's OK).
 - The Schedules section was taken out (itai's call): every trip is different, so trips are created from New booking. Nothing changed in the database, so it can be put back.
 
 ## Open questions
