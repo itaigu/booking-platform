@@ -238,16 +238,89 @@ select tests.fails(format('update products set max_guests = 4 where id = %s', :p
   'no shrinking a tour below the guests already booked');
 
 -- ---------------------------------------------------------------------------
--- Hotel codes (existing rule)
+-- Hotel bookings and commissions
 -- ---------------------------------------------------------------------------
 
 insert into hotels (name, default_commission_pct) values ('Hotel One', 10) returning id as h1 \gset
+insert into hotels (name, default_commission_pct) values ('Hotel Two', 12) returning id as h2 \gset
+insert into hotels (name, default_commission_pct, active) values ('Old Hotel', 5, false) returning id as h0 \gset
 select tests.login('office');
+
 insert into bookings (departure_id, customer_id, channel, hotel_id, hotel_code, guests, total_price)
 values (:d6, :c1, 'hotel', :h1, 'ABC-1', 1, 80);
 select tests.fails(format($$insert into bookings (departure_id, customer_id, channel, hotel_id, hotel_code, guests, total_price)
                             values (%s, %s, 'hotel', %s, 'abc-1', 1, 80)$$, :d6, :c1, :h1),
   'duplicate key', 'one hotel code, one booking');
+select tests.ok((select c.commission_pct = 10 and c.commission_amount = 8 and c.status = 'owed'
+                   from commissions c join bookings b on b.id = c.booking_id where b.hotel_code = 'ABC-1'),
+                'every hotel booking gets its commission (10% of 80)');
+
+select create_hotel_booking(jsonb_build_object('hotel_id', :h1, 'code', 'ABC-2'), '{"full_name": "Eve"}',
+  :d6, null, format('[{"ticket_type_id": %s, "quantity": 2}]', :tt5)::jsonb) as hb1 \gset
+select tests.ok((select channel = 'hotel' and hotel_code = 'ABC-2' and total_price = 160 from bookings where id = :hb1),
+                'hotel booking on a trip already on the calendar');
+select tests.ok((select commission_amount = 16 from commissions where booking_id = :hb1), 'commission at the hotel default: 10% of 160');
+select tests.fails(format($$select create_hotel_booking(jsonb_build_object('hotel_id', %s, 'code', ' abc-2 '), '{"full_name": "Eve"}',
+                            %s, null, '[{"ticket_type_id": %s, "quantity": 1}]')$$, :h1, :d6, :tt5),
+  'already used \(booking CS-', 'a hotel code is used only once, whatever the case or spaces');
+select tests.fails(format($$select create_hotel_booking(jsonb_build_object('hotel_id', %s, 'code', 'X1'), '{"full_name": "Eve"}',
+                            %s, null, '[{"ticket_type_id": %s, "quantity": 1}]')$$, :h0, :d6, :tt5),
+  'Choose the hotel', 'no bookings for an inactive hotel');
+select tests.fails(format($$select create_hotel_booking(jsonb_build_object('hotel_id', %s, 'code', '  '), '{"full_name": "Eve"}',
+                            %s, null, '[{"ticket_type_id": %s, "quantity": 1}]')$$, :h1, :d6, :tt5),
+  'Enter the hotel code', 'a hotel booking needs the code');
+select tests.fails(format($$select create_booking(%s, '{"full_name": "Eve"}', 'hotel', '[{"ticket_type_id": %s, "quantity": 1}]', null)$$, :d6, :tt5),
+  'Choose the hotel', 'the other booking forms cannot make hotel bookings');
+
+select create_hotel_booking(jsonb_build_object('hotel_id', :h1, 'code', 'ZZ-9', 'commission_pct', '15'), '{"full_name": "Fay"}', null,
+  jsonb_build_object('name', 'Hotel charter', 'kind', 'private', 'boat_id', 2,
+    'starts_at', '2030-02-20T09:00:00-07:00', 'duration_minutes', 120, 'base_guests', 4, 'base_price', 900)) as hb2 \gset
+select tests.ok((select commission_pct = 15 and commission_amount = 135 from commissions where booking_id = :hb2),
+                'new trip from a hotel, with its own 15%');
+select create_hotel_booking(jsonb_build_object('hotel_id', :h2, 'code', 'zz-9'), '{"full_name": "Gus"}',
+  :d6, null, format('[{"ticket_type_id": %s, "quantity": 1}]', :tt5)::jsonb) as hb4 \gset
+select tests.ok(true, 'another hotel can use the same code');
+
+update bookings set total_price = 1000 where id = :hb2;
+select tests.ok((select commission_amount = 150 from commissions where booking_id = :hb2), 'commission follows a new total');
+select update_booking_guests(:hb2, 5, null, 50);
+select tests.ok((select commission_amount = 142.50 from commissions where booking_id = :hb2), 'commission follows a change of guests');
+update commissions set commission_pct = 20 where booking_id = :hb2;
+select tests.ok((select commission_amount = 190 from commissions where booking_id = :hb2), 'a new % works the amount out again');
+update commissions set commission_amount = 1 where booking_id = :hb2;
+select tests.ok((select commission_amount = 190 from commissions where booking_id = :hb2), 'the amount cannot be typed by hand');
+
+update bookings set status = 'cancelled' where id = :hb2;
+select tests.ok((select status = 'cancelled' from commissions where booking_id = :hb2), 'cancelling the booking cancels its commission');
+update bookings set status = 'confirmed' where id = :hb2;
+select tests.ok((select status = 'owed' and commission_amount = 190 from commissions where booking_id = :hb2),
+                'reactivating the booking brings its commission back');
+update bookings set status = 'no_show' where id = :hb2;
+select tests.ok((select status = 'owed' from commissions where booking_id = :hb2), 'a no-show keeps its commission');
+
+-- a trip that already happened
+select create_hotel_booking(jsonb_build_object('hotel_id', :h1, 'code', 'OLD-1'), '{"full_name": "Hal"}', null,
+  jsonb_build_object('name', 'Past charter', 'kind', 'private', 'boat_id', 1,
+    'starts_at', '2020-03-10T09:00:00-07:00', 'duration_minutes', 120, 'base_guests', 2, 'base_price', 500)) as hb3 \gset
+select tests.ok((select trip_day = '2020-03-10' and commission_amount = 50 from commission_lines where booking_id = :hb3),
+                'report line with the trip day in Cabo time');
+select tests.ok(pay_hotel_commissions(:h1, '2020-03-01', '2020-04-05') = 1, 'mark a hotel''s month as paid');
+select tests.ok((select status = 'paid' and paid_at = '2020-04-05' from commissions where booking_id = :hb3), 'paid, with the payment date');
+select tests.fails(format('update commissions set commission_pct = 50 where booking_id = %s', :hb3), 'already paid',
+  'a paid commission cannot change');
+update bookings set total_price = 400 where id = :hb3;
+select tests.ok((select commission_amount = 50 from commissions where booking_id = :hb3), 'a paid commission keeps its amount');
+select tests.fails(format($$select pay_hotel_commissions(%s, '2020-03-01', '2020-04-05')$$, :h1), 'Nothing to mark',
+  'no paying the same month twice');
+select tests.fails(format($$select pay_hotel_commissions(%s, '2030-02-01', '2030-03-01')$$, :h1), 'Nothing to mark',
+  'trips that have not happened yet are not paid');
+select tests.fails(format($$select undo_hotel_commission_payment(%s, '2020-03-01')$$, :h1), 'row-level security',
+  'office cannot undo a payment');
+select tests.login('admin');
+select tests.ok(undo_hotel_commission_payment(:h1, '2020-03-01') = 1, 'admin can undo a payment');
+select tests.ok((select status = 'owed' and paid_at is null and commission_amount = 40 from commissions where booking_id = :hb3),
+                'undone: owed again, from the new total');
+select tests.login('office');
 
 -- ---------------------------------------------------------------------------
 -- Who sees what
@@ -257,6 +330,7 @@ select tests.login('crew');
 select tests.ok((select count(*) = 0 from bookings), 'crew: no direct access to bookings');
 select tests.ok((select count(*) = 0 from customers), 'crew: no direct access to customers');
 select tests.ok((select count(*) = 0 from payments), 'crew: no access to payments');
+select tests.ok((select count(*) = 0 from commission_lines), 'crew: no access to commissions');
 select tests.ok((select guests_booked = 8 from departure_availability where id = :d1), 'crew: still sees seats booked');
 select tests.ok((select count(*) = 1 and bool_and(total_price is null) and bool_and(full_name = 'Ana Perez')
                    from trip_manifest(:d1)), 'crew: guest list without prices');
@@ -268,6 +342,7 @@ select tests.login('dock');
 select tests.ok((select count(*) > 0 from bookings), 'dock: sees bookings');
 select tests.ok((select bool_and(total_price is not null) from trip_manifest(:d1)), 'dock: guest list with prices');
 select tests.ok((select count(*) = 0 from change_log), 'dock: no access to the history');
+select tests.ok((select count(*) = 0 from commission_lines), 'dock: no access to commissions');
 select tests.fails(format('select update_booking_guests(%s, 7)', :b1), 'row-level security', 'dock: cannot change bookings');
 
 select tests.login('');

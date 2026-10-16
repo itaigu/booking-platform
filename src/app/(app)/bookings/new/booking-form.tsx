@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Button, Card, Field, Input } from "@/components/ui";
+import type { HotelOption } from "@/lib/types";
 import { createBooking, getQuote } from "../actions";
 import { CustomerCard, DetailsCard } from "./customer-cards";
 
@@ -11,11 +12,12 @@ type Props = {
   seatsLeft: number;
   baseGuests: number | null;
   tickets: { id: number; name: string }[];
+  hotels: HotelOption[];
   labels: Record<string, string>;
   lang: "es" | "en";
 };
 
-export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets, labels: l, lang }: Props) {
+export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets, hotels, labels: l, lang }: Props) {
   const [qty, setQty] = useState<Record<number, number>>({});
   const [guests, setGuests] = useState(kind === "private" ? Math.min(baseGuests ?? 2, seatsLeft) : 0);
   const [quote, setQuote] = useState<{ key?: string; total?: number; error?: string }>({});
@@ -91,7 +93,7 @@ export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets,
       </Card>
 
       <CustomerCard labels={l} lang={lang} />
-      <DetailsCard labels={l} />
+      <DetailsCard labels={l} hotels={hotels} />
 
       <Button type="submit" disabled={totalGuests < 1 || totalGuests > seatsLeft}>
         {l.createBooking}

@@ -5,6 +5,7 @@ import { Stepper } from "@/components/stepper";
 import { TimePicker } from "@/components/time-picker";
 import { Button, Card, choiceCard, Field, FormSection, Input, MoneyInput, Select } from "@/components/ui";
 import { fmtClock } from "@/lib/format";
+import type { HotelOption } from "@/lib/types";
 import { createTripBooking } from "../actions";
 import { CustomerCard, DetailsCard } from "./customer-cards";
 
@@ -29,6 +30,7 @@ export type BoatOption = { id: number; name: string; max_guests: number };
 type Props = {
   templates: Template[];
   boats: BoatOption[];
+  hotels: HotelOption[];
   date: string;
   labels: Record<string, string>;
   lang: "es" | "en";
@@ -36,7 +38,7 @@ type Props = {
 
 // New booking: the trip is created together with the booking, with its own
 // details. A tour can be picked to fill in the form, but everything stays editable.
-export function TripBookingForm({ templates, boats, date, labels: l, lang }: Props) {
+export function TripBookingForm({ templates, boats, hotels, date, labels: l, lang }: Props) {
   const [templateId, setTemplateId] = useState("");
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -84,7 +86,7 @@ export function TripBookingForm({ templates, boats, date, labels: l, lang }: Pro
         </div>
       </Card>
 
-      <DetailsCard labels={l} />
+      <DetailsCard labels={l} hotels={hotels} />
 
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
         {error && (

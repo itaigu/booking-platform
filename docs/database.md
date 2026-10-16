@@ -24,8 +24,12 @@ These hold no matter which screen or channel a booking comes from:
   including the cleaning and fueling time after each trip.
 - **One hotel code, one booking.** A hotel can't use the same code twice.
 - **No discounts on hotel bookings.** A hotel booking can't have a promo code.
+- **Every hotel booking gets its commission,** at the hotel's % (or a special % for that booking).
 - **Commission is frozen at sale time.** The % is copied onto each booking.
-- **Cancelling a booking cancels its unpaid commission.**
+- **The commission amount is always total × %,** and follows the booking total until it is paid.
+  A paid commission can't change.
+- **Cancelling a booking cancels its unpaid commission;** reactivating the booking brings it back.
+  A no-show keeps its commission.
 - **Only logged-in, active staff** can see or change anything.
 - **No trips on blocked boats,** and no blocks on top of live trips.
 - **Every change is kept in a history** that can't be edited.
@@ -74,6 +78,23 @@ These hold no matter which screen or channel a booking comes from:
   live trips).
 - **Returning customers:** a new booking reuses the customer when the email
   matches, or both the name and the phone match.
+
+## Hotel bookings (`20261016010000_hotel_bookings.sql`)
+
+- **`create_hotel_booking`** makes a hotel booking on a trip already on the
+  calendar or on a new one-off trip. It needs an active hotel and its code, and
+  refuses a code that hotel already used (any case or spaces). The commission
+  % is the hotel's unless the booking gives its own.
+- **Commission triggers:** every hotel booking gets a commission row; the amount
+  is worked out from the booking total and the %, and follows the total while
+  the commission is owed.
+- **`commission_lines`** (view): one line per hotel booking with the hotel, the
+  trip day in Cabo time and the commission. Admin and office only.
+- **`pay_hotel_commissions`** marks a hotel's owed commissions for one month
+  (by trip day) as paid, only for trips that already happened.
+  **`undo_hotel_commission_payment`** puts them back (admin only).
+- `create_booking` and `create_trip_booking` work as before; the shared parts
+  now live in `insert_booking` and `create_one_off_trip`.
 
 ## Tests
 

@@ -96,6 +96,17 @@ export function ButtonLink({ variant = "primary", className = "", ...props }: Co
   );
 }
 
+// A file download (a plain link, so the browser saves the file).
+export function DownloadLink({ className = "", ...props }: ComponentProps<"a">) {
+  return (
+    <a
+      {...props}
+      download
+      className={`inline-block rounded-md px-4 py-2 text-sm font-medium ${btn.secondary} ${className}`}
+    />
+  );
+}
+
 export function Flash({ error, ok }: { error?: string; ok?: string }) {
   if (!error && !ok) return null;
   return (
