@@ -57,7 +57,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
 
   const { data } = await supabase
     .from("bookings")
-    .select("*, customers(*), booking_items(*), staff(full_name), hotels(name)")
+    .select("*, customers(*), booking_items(*), staff!bookings_created_by_fkey(full_name), hotels(name)")
     .eq("id", id)
     .maybeSingle();
   if (!data) notFound();
