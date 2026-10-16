@@ -13,7 +13,7 @@ export default async function SchedulesPage({ searchParams }: PageProps<"/schedu
   const adding = sp.add === "1";
   const [{ data: schedules }, { data: products }, { data: boats }] = await Promise.all([
     supabase.from("schedules").select("*, products(name_en, name_es), boats(name)").order("start_time"),
-    supabase.from("products").select("id, name_en, name_es").eq("active", true).order("name_en"),
+    supabase.from("products").select("id, name_en, name_es").eq("active", true).eq("one_off", false).order("name_en"),
     supabase.from("boats").select("id, name").eq("active", true).order("name"),
   ]);
   const today = todayLocal();

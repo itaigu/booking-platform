@@ -44,6 +44,19 @@ export function Field({
   );
 }
 
+// One part of a long form: title and help on the left, fields on the right.
+export function FormSection({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
+  return (
+    <section className="grid gap-4 border-t border-slate-200 pt-6 first:border-t-0 first:pt-0 lg:grid-cols-[13rem_1fr] lg:gap-8">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+        {desc && <p className="mt-1 text-xs leading-snug text-slate-500">{desc}</p>}
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
 const inputCls =
   "rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600";
 
@@ -113,7 +126,20 @@ export function Grid({ children }: { children: ReactNode }) {
 
 // Blue "+ New …" button for the page title. Opens the "add" form by adding
 // add=1 to the page link; shows "×" to close it again.
-export function AddToggle({ href, open, label, closeLabel }: { href: string; open: boolean; label: string; closeLabel: string }) {
+// `quiet` draws it white, for when the page has another main button.
+export function AddToggle({
+  href,
+  open,
+  label,
+  closeLabel,
+  quiet,
+}: {
+  href: string;
+  open: boolean;
+  label: string;
+  closeLabel: string;
+  quiet?: boolean;
+}) {
   return (
     <Link
       href={open ? href : `${href}${href.includes("?") ? "&" : "?"}add=1`}
@@ -122,7 +148,9 @@ export function AddToggle({ href, open, label, closeLabel }: { href: string; ope
       className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-md text-sm font-medium sm:h-9 ${
         open
           ? "w-11 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 sm:w-9"
-          : "min-w-11 bg-sky-700 px-3 text-white shadow-sm hover:bg-sky-800"
+          : quiet
+            ? "min-w-11 border border-slate-300 bg-white px-3 text-slate-800 hover:bg-slate-50"
+            : "min-w-11 bg-sky-700 px-3 text-white shadow-sm hover:bg-sky-800"
       }`}
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>

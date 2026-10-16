@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Button, Card, Field, Grid, Input, Select, Textarea } from "@/components/ui";
+import { Button, Card, Field, Input } from "@/components/ui";
 import { createBooking, getQuote } from "../actions";
+import { CustomerCards } from "./customer-cards";
 
 type Props = {
   departureId: number;
@@ -14,12 +15,9 @@ type Props = {
   lang: "es" | "en";
 };
 
-const channels = ["phone", "whatsapp", "walk_in", "ota", "other"] as const;
-
 export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets, labels: l, lang }: Props) {
   const [qty, setQty] = useState<Record<number, number>>({});
   const [guests, setGuests] = useState(kind === "private" ? Math.min(baseGuests ?? 2, seatsLeft) : 0);
-  const [channel, setChannel] = useState<string>("phone");
   const [quote, setQuote] = useState<{ key?: string; total?: number; error?: string }>({});
   const [, startTransition] = useTransition();
 
@@ -92,64 +90,7 @@ export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets,
         </div>
       </Card>
 
-      <Card title={l.customer}>
-        <Grid>
-          <Field label={l.name}>
-            <Input name="full_name" required />
-          </Field>
-          <Field label={l.phone}>
-            <Input name="phone" type="tel" />
-          </Field>
-          <Field label={l.email}>
-            <Input name="email" type="email" />
-          </Field>
-          <Field label={l.language}>
-            <Select name="language" defaultValue={lang === "es" ? "es" : "en"}>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-            </Select>
-          </Field>
-          <Field label={l.emergencyContact}>
-            <Input name="emergency_contact_name" />
-          </Field>
-          <Field label={l.emergencyPhone}>
-            <Input name="emergency_contact_phone" type="tel" />
-          </Field>
-        </Grid>
-      </Card>
-
-      <Card title={l.details}>
-        <Grid>
-          <Field label={l.channel}>
-            <Select name="channel" value={channel} onChange={(e) => setChannel(e.target.value)}>
-              {channels.map((c) => (
-                <option key={c} value={c}>{l[`channel_${c}`]}</option>
-              ))}
-            </Select>
-          </Field>
-          {channel === "ota" ? (
-            <>
-              <Field label={l.otaName}>
-                <Input name="ota_name" />
-              </Field>
-              <Field label={l.otaReference}>
-                <Input name="ota_reference" />
-              </Field>
-            </>
-          ) : (
-            <div />
-          )}
-          <Field label={l.occasion}>
-            <Input name="occasion" placeholder={l.occasionHint} />
-          </Field>
-          <Field label={l.specialRequests}>
-            <Textarea name="special_requests" />
-          </Field>
-          <Field label={l.internalNotes}>
-            <Textarea name="internal_notes" />
-          </Field>
-        </Grid>
-      </Card>
+      <CustomerCards labels={l} lang={lang} />
 
       <Button type="submit" disabled={totalGuests < 1 || totalGuests > seatsLeft}>
         {l.createBooking}

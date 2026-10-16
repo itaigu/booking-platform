@@ -4,9 +4,12 @@ import { useState } from "react";
 
 // A number picked with − and + buttons instead of typing.
 // "hours" shows minutes as "3 h 30 min"; "minutes" shows "45 min".
+// Pass `value` and `onChange` when the page needs to follow the number.
 export function Stepper({
   name,
-  defaultValue,
+  defaultValue = 0,
+  value: controlled,
+  onChange,
   min = 0,
   max = 999,
   step = 1,
@@ -17,7 +20,9 @@ export function Stepper({
   more,
 }: {
   name: string;
-  defaultValue: number;
+  defaultValue?: number;
+  value?: number;
+  onChange?: (value: number) => void;
   min?: number;
   max?: number;
   step?: number;
@@ -27,7 +32,12 @@ export function Stepper({
   less: string;
   more: string;
 }) {
-  const [value, setValue] = useState(Math.min(Math.max(defaultValue, min), max));
+  const [own, setOwn] = useState(Math.min(Math.max(defaultValue, min), max));
+  const value = Math.min(Math.max(controlled ?? own, min), max);
+  const setValue = (v: number) => {
+    setOwn(v);
+    onChange?.(v);
+  };
   const display =
     show === "hours"
       ? [Math.floor(value / 60) && `${Math.floor(value / 60)} h`, value % 60 && `${value % 60} min`].filter(Boolean).join(" ") || "0 h"
@@ -47,7 +57,7 @@ export function Stepper({
         type="button"
         className={btn}
         disabled={value <= min}
-        onClick={() => setValue((v) => Math.max(v - step, min))}
+        onClick={() => setValue(Math.max(value - step, min))}
         aria-label={`${less}: ${label}`}
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
@@ -62,7 +72,7 @@ export function Stepper({
         type="button"
         className={btn}
         disabled={value >= max}
-        onClick={() => setValue((v) => Math.min(v + step, max))}
+        onClick={() => setValue(Math.min(value + step, max))}
         aria-label={`${more}: ${label}`}
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>

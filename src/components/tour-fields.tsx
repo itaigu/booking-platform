@@ -1,7 +1,6 @@
-import type { ReactNode } from "react";
 import type { Lang, T } from "@/lib/i18n";
 import { cap } from "@/lib/format";
-import { choiceCard, Field, Input, MoneyInput, Select } from "./ui";
+import { choiceCard, Field, FormSection as Section, Input, MoneyInput, Select } from "./ui";
 import { Stepper } from "./stepper";
 import { TourKindSwitch } from "./tour-kind-switch";
 
@@ -23,18 +22,6 @@ export type Product = {
   season_end: string | null;
   active: boolean;
 };
-
-function Section({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
-  return (
-    <section className="grid gap-4 border-t border-slate-200 pt-6 first:border-t-0 first:pt-0 lg:grid-cols-[13rem_1fr] lg:gap-8">
-      <div>
-        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-        {desc && <p className="mt-1 text-xs leading-snug text-slate-500">{desc}</p>}
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>
-    </section>
-  );
-}
 
 // Form fields for creating or editing a tour, in sections.
 // `boatMax` is the biggest linked boat, used when the tour has no guest limit yet.

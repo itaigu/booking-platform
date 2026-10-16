@@ -9,12 +9,13 @@ export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
   const sp = await searchParams;
   const { supabase, lang, t } = await pageContext(["admin"]);
   const adding = sp.add === "1";
-  const { data } = await supabase.from("products").select("*, ticket_types(price)").order("active", { ascending: false }).order("name_en");
+  const { data } = await supabase.from("products").select("*, ticket_types(price)").eq("one_off", false).order("active", { ascending: false }).order("name_en");
   const tours = (data ?? []) as (Product & { ticket_types: { price: number }[] })[];
 
   return (
     <>
       <PageTitle actions={<AddToggle href="/tours" open={adding} label={t("newTour")} closeLabel={t("close")} />}>{t("tours")}</PageTitle>
+      <p className="-mt-2 mb-4 max-w-2xl text-sm text-slate-600">{t("toursIntro")}</p>
       <Flash error={sp.error as string | undefined} />
       {adding && (
         <Card title={t("newTour")}>
