@@ -84,6 +84,7 @@ The plan may change after talking with the team about what they really need.
   - Not done yet: a hotel price list. For now the hotel price is typed in each booking.
   - Database update: `20261016010000_hotel_bookings.sql` (Claude ran it in Supabase on 2026-10-16 with itai's OK).
 - The Schedules section was taken out (itai's call): every trip is different, so trips are created from New booking. Nothing changed in the database, so it can be put back.
+- A booking taken another way (phone, WhatsApp…) can be turned into a hotel booking from its page ("Cambiar a reserva de hotel"), with the hotel, its code and the commission %.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
