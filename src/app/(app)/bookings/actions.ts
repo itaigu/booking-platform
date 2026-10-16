@@ -219,3 +219,58 @@ export async function updateHotelDetails(form: FormData) {
   revalidatePath("/commissions");
   go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
 }
+
+// Turn a booking taken by phone, WhatsApp, etc. into a hotel booking, with its commission.
+export async function makeHotelBooking(form: FormData) {
+  const id = str(form, "id");
+  const back = `/bookings/${id}`;
+  const { supabase, fail, go, lang } = await actionContext(back, ["admin", "office"]);
+  const hotelId = num(form, "hotel_id");
+  const code = str(form, "hotel_code");
+  const pct = num(form, "commission_pct");
+  if (!hotelId) fail("Choose the hotel");
+  if (!code) fail("Enter the hotel code");
+  if (pct !== null && !(pct >= 0 && pct <= 100)) fail("The commission must be between 0 and 100");
+
+  const { data: hotel } = await supabase
+    .from("hotels")
+    .select("id, default_commission_pct")
+    .eq("id", hotelId!)
+    .eq("active", true)
+    .maybeSingle();
+  if (!hotel) fail("Choose the hotel");
+  const { data: used } = await supabase
+    .from("bookings")
+    .select("booking_number")
+    .eq("hotel_id", hotelId!)
+    .ilike("hotel_code", code.replace(/[%_\\]/g, "\\$&"))
+    .neq("id", id)
+    .limit(1)
+    .maybeSingle();
+  if (used) fail(`This hotel code was already used (booking ${used.booking_number})`);
+
+  const { data: booking, error } = await supabase
+    .from("bookings")
+    .update({ channel: "hotel", hotel_id: hotelId, hotel_code: code, ota_name: null, ota_reference: null })
+    .eq("id", id)
+    .neq("channel", "hotel")
+    .select("status")
+    .maybeSingle();
+  if (error) fail(error.message);
+  if (!booking) fail("Some information is missing");
+
+  // The database works out the amount from the booking total.
+  const { error: commError } = await supabase.from("commissions").insert({
+    booking_id: Number(id),
+    hotel_id: hotelId,
+    commission_pct: pct ?? hotel!.default_commission_pct,
+    commission_amount: 0,
+    status: booking!.status === "cancelled" ? "cancelled" : "owed",
+  });
+  if (commError) fail(commError.message);
+
+  revalidatePath(back);
+  revalidatePath("/bookings");
+  revalidatePath("/commissions");
+  go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
+}

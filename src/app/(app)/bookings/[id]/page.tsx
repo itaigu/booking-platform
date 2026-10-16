@@ -8,7 +8,7 @@ import { EditTripForm } from "@/components/edit-trip-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Stepper } from "@/components/stepper";
 import { Badge, Button, ButtonLink, Card, Field, Flash, Grid, Input, MoneyInput, PageTitle, Select, Textarea } from "@/components/ui";
-import { changeGuests, rescheduleBooking, setBookingStatus, updateBooking, updateHotelDetails } from "../actions";
+import { changeGuests, makeHotelBooking, rescheduleBooking, setBookingStatus, updateBooking, updateHotelDetails } from "../actions";
 
 type Booking = {
   id: number;
@@ -62,7 +62,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
   const b = data as unknown as Booking;
 
   const editable = canBook(staff.role);
-  const [{ data: trip }, { data: product }, { data: boatData }, { count: customerBookings }, { data: history }, { data: commission }] = await Promise.all([
+  const [{ data: trip }, { data: product }, { data: boatData }, { count: customerBookings }, { data: history }, { data: commission }, { data: hotelData }] = await Promise.all([
     supabase.from("departure_availability").select("*").eq("id", b.departure_id).single<Availability>(),
     supabase
       .from("departures")
@@ -86,7 +86,12 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
     editable && b.channel === "hotel"
       ? supabase.from("commissions").select("commission_pct, commission_amount, status, paid_at").eq("booking_id", b.id).maybeSingle<Commission>()
       : Promise.resolve({ data: null }),
+    // Hotels to choose from, to turn this booking into a hotel booking.
+    editable && b.channel !== "hotel"
+      ? supabase.from("hotels").select("id, name, default_commission_pct").eq("active", true).order("name")
+      : Promise.resolve({ data: [] }),
   ]);
+  const hotels = (hotelData ?? []) as { id: number; name: string; default_commission_pct: number }[];
   const boats = boatData ?? [];
   const prod = (product?.products ?? null) as unknown as {
     kind: "private" | "shared";
@@ -220,6 +225,33 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
             )}
             <div>
               <Button type="submit" variant="secondary">{t("saveHotelDetails")}</Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {editable && b.channel !== "hotel" && hotels.length > 0 && (
+        <Card title={t("makeHotelBooking")}>
+          <form action={makeHotelBooking} className="flex flex-col gap-4">
+            <input type="hidden" name="id" value={b.id} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Field label={t("hotel")}>
+                <Select name="hotel_id" required defaultValue="">
+                  <option value="" disabled>{t("chooseHotel")}</option>
+                  {hotels.map((h) => (
+                    <option key={h.id} value={h.id}>{h.name} ({Number(h.default_commission_pct)}%)</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t("hotelCode")} hint={t("hotelCodeHint")}>
+                <Input name="hotel_code" required autoComplete="off" />
+              </Field>
+              <Field label={t("commissionPct")} hint={t("makeHotelPctHint")}>
+                <Input name="commission_pct" type="number" min={0} max={100} step="0.01" className="sm:max-w-[10rem]" />
+              </Field>
+            </div>
+            <div>
+              <Button type="submit" variant="secondary">{t("makeHotelBooking")}</Button>
             </div>
           </form>
         </Card>

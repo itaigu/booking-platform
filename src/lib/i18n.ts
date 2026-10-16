@@ -339,6 +339,8 @@ const dict = {
   notYet: ["trip not yet", "paseo aún no pasa"],
   commissionsMarked: ["{n} commissions marked as paid", "{n} comisiones marcadas como pagadas"],
   commissionsUndone: ["{n} commissions back to owed", "{n} comisiones volvieron a pendiente"],
+  makeHotelBooking: ["Make it a hotel booking", "Cambiar a reserva de hotel"],
+  makeHotelPctHint: ["Empty = the hotel's %", "Vacío = el % del hotel"],
   saveHotelDetails: ["Save hotel details", "Guardar datos del hotel"],
   histCommission: ["Commission created", "Comisión creada"],
 } as const;
