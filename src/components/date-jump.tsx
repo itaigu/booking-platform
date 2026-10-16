@@ -11,12 +11,15 @@ export function DateJump({
   label,
   shortLabel,
   ariaLabel,
+  path = "/calendar",
 }: {
   date: string;
   week: boolean;
   label: string;
   shortLabel: string;
   ariaLabel: string;
+  // The page to open the chosen day on.
+  path?: string;
 }) {
   const router = useRouter();
   const ref = useRef<HTMLInputElement>(null);
@@ -52,7 +55,7 @@ export function DateJump({
         onClick={(e) => openPicker(e.currentTarget)}
         onChange={(e) => {
           const v = e.target.value;
-          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) router.push(`/calendar?date=${v}${week ? "&view=week" : ""}`);
+          if (/^\d{4}-\d{2}-\d{2}$/.test(v)) router.push(`${path}?date=${v}${week ? "&view=week" : ""}`);
         }}
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
       />

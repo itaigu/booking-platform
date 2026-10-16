@@ -337,10 +337,18 @@ select tests.ok((select count(*) = 1 and bool_and(total_price is null) and bool_
 select tests.fails(format($$select update_departure(%s, 1, '2030-01-11T11:00:00-07:00', 180, 30)$$, :d1),
   'row-level security', 'crew: cannot move a trip');
 select tests.fails(format('select cancel_departure(%s)', :d1), 'row-level security', 'crew: cannot cancel a trip');
+select (starts_at at time zone 'America/Mazatlan')::date as day1 from departures where id = :d1 \gset
+select tests.ok((select count(*) = 1 and bool_and(total_price is null and paid is null and internal_notes is null)
+                   from day_manifest(:'day1') where departure_id = :d1), 'crew: day manifest without money or internal notes');
+select tests.ok(set_check_in(:b1, true) is not null, 'crew: can check a group in');
+select tests.ok((select checked_in_at is not null from day_manifest(:'day1') where booking_id = :b1), 'checked in shows on the manifest');
+select tests.ok(set_check_in(:b1, false) is null, 'crew: can undo a check-in');
+select tests.ok((select count(*) = 0 from day_manifest(:'day1' ::date + 1) where departure_id = :d1), 'the next day does not show this trip');
 
 select tests.login('dock');
 select tests.ok((select count(*) > 0 from bookings), 'dock: sees bookings');
 select tests.ok((select bool_and(total_price is not null) from trip_manifest(:d1)), 'dock: guest list with prices');
+select tests.ok((select bool_and(total_price is not null and paid = 0) from day_manifest(:'day1')), 'dock: day manifest with total and paid');
 select tests.ok((select count(*) = 0 from change_log), 'dock: no access to the history');
 select tests.ok((select count(*) = 0 from commission_lines), 'dock: no access to commissions');
 select tests.fails(format('select update_booking_guests(%s, 7)', :b1), 'row-level security', 'dock: cannot change bookings');
@@ -349,6 +357,7 @@ select tests.login('');
 reset role;
 set role anon;
 select tests.fails('select is_admin()', 'permission denied', 'not logged in: no access to the role checks');
+select tests.fails(format('select set_check_in(%s, true)', :b1), 'permission denied', 'not logged in: cannot check in');
 select tests.ok((select count(*) = 0 from bookings) and (select count(*) = 0 from customers), 'not logged in: sees no bookings or customers');
 reset role;
 set role authenticated;
@@ -363,6 +372,7 @@ select tests.ok((select status = 'weather_cancelled' from departures where id = 
 select tests.ok((select bool_and(status = 'cancelled' and cancelled_at is not null) from bookings where departure_id = :d3),
                 'bad weather: every booking cancelled with its date');
 select tests.fails(format('select cancel_departure(%s)', :d3), 'already cancelled', 'no cancelling twice');
+select tests.fails(format('select set_check_in(%s, true)', :b3), 'cancelled', 'no check-in on a cancelled booking');
 
 reset role;
 \o

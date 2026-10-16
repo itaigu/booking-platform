@@ -26,6 +26,8 @@ type Booking = {
   occasion: string | null;
   special_requests: string | null;
   internal_notes: string | null;
+  pickup_time: string | null;
+  pickup_place: string | null;
   created_at: string;
   customers: {
     full_name: string;
@@ -287,6 +289,8 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
               <Field label={t("total")}><Input name="total_price" type="number" step="0.01" min={0} defaultValue={b.total_price} /></Field>
               <Field label={t("specialRequests")}><Textarea name="special_requests" defaultValue={b.special_requests ?? ""} /></Field>
               <Field label={t("internalNotes")}><Textarea name="internal_notes" defaultValue={b.internal_notes ?? ""} /></Field>
+              <Field label={t("pickupTime")}><Input name="pickup_time" type="time" defaultValue={b.pickup_time?.slice(0, 5) ?? ""} className="sm:max-w-[10rem]" /></Field>
+              <Field label={t("pickupPlace")}><Input name="pickup_place" defaultValue={b.pickup_place ?? ""} placeholder={t("pickupPlaceHint")} /></Field>
               {b.channel === "ota" && (
                 <>
                   <Field label={t("otaName")}><Input name="ota_name" defaultValue={b.ota_name ?? ""} /></Field>
