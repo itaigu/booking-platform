@@ -71,9 +71,7 @@ declare
   t text;
 begin
   foreach t in array array['customers', 'bookings', 'booking_items', 'payments'] loop
-    execute format('drop policy staff_read on %I', t);
-    execute format($p$create policy staff_read on %I for select to authenticated
-      using (has_role('admin', 'office', 'dock'))$p$, t);
+    execute format($p$alter policy staff_read on %I using (has_role('admin', 'office', 'dock'))$p$, t);
   end loop;
 end;
 $$;
