@@ -73,7 +73,7 @@ The plan may change after talking with the team about what they really need.
   - Admins can set a new password for staff who forget theirs (Staff page).
   - Security clean-up in Supabase and indexes so searches stay fast with many bookings.
   - Automatic tests for the database rules and the code, run by GitHub on every change.
-  - Database update: `20261016000000_review_fixes.sql`. Claude ran it in Supabase in 7 parts (`review_fixes_1` to `review_fixes_7` in the migration history). Still missing there: the function `update_booking_guests` (change the number of guests). Supabase asks for an extra confirmation before creating it that can't reach the chat, so itai pastes it once in the SQL Editor.
+  - Database update: `20261016000000_review_fixes.sql`. Claude ran it in Supabase in 7 parts (`review_fixes_1` to `review_fixes_7` in the migration history). itai pasted the function `update_booking_guests` (change the number of guests) in the SQL Editor, because Supabase asks for an extra confirmation before creating it that can't reach the chat.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
