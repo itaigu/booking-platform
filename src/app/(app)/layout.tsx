@@ -9,9 +9,11 @@ import type { Role } from "@/lib/auth";
 const nav: { href: string; key: Key; roles: Role[]; group: "ops" | "setup" }[] = [
   { href: "/calendar", key: "calendar", roles: ["admin", "office", "dock", "crew"], group: "ops" },
   { href: "/bookings", key: "bookings", roles: ["admin", "office", "dock"], group: "ops" },
+  { href: "/commissions", key: "commissions", roles: ["admin", "office"], group: "ops" },
   { href: "/tours", key: "tours", roles: ["admin"], group: "setup" },
   { href: "/boats", key: "boats", roles: ["admin"], group: "setup" },
   { href: "/schedules", key: "schedules", roles: ["admin"], group: "setup" },
+  { href: "/hotels", key: "hotels", roles: ["admin"], group: "setup" },
   { href: "/staff", key: "staff", roles: ["admin"], group: "setup" },
 ];
 

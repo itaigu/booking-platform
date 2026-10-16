@@ -11,7 +11,8 @@ import { TripBookingForm, type Template } from "./trip-booking-form";
 const customerKeys = [
   "customer", "name", "email", "phone", "language", "emergencyContact", "emergencyPhone", "channel",
   "otaName", "otaReference", "occasion", "occasionHint", "specialRequests", "internalNotes", "details",
-  "channel_phone", "channel_whatsapp", "channel_walk_in", "channel_ota", "channel_other", "createBooking",
+  "channel_phone", "channel_whatsapp", "channel_walk_in", "channel_hotel", "channel_ota", "channel_other", "createBooking",
+  "hotel", "chooseHotel", "hotelCode", "hotelCodeHint", "commissionPct", "commissionPctHint",
 ] as const;
 const tripKeys = [
   ...customerKeys,
@@ -30,10 +31,11 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
 
   const date = isDay(sp.date as string) ? (sp.date as string) : todayLocal();
   const tr = translator(lang);
+  const hotelList = () => supabase.from("hotels").select("id, name, default_commission_pct").eq("active", true).order("name");
 
   // Default: a new trip with its own details, created together with the booking.
   if (!departureId && sp.existing !== "1") {
-    const [{ data: tourData }, { data: boatData }] = await Promise.all([
+    const [{ data: tourData }, { data: boatData }, { data: hotels }] = await Promise.all([
       supabase
         .from("products")
         .select("*, ticket_types(price, active), product_boats(boat_id)")
@@ -41,6 +43,7 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
         .eq("active", true)
         .order("name_es"),
       supabase.from("boats").select("id, name, max_guests").eq("active", true).order("name"),
+      hotelList(),
     ]);
     type Row = Omit<Template, "name" | "guest_price" | "boat_id"> & {
       name_es: string;
@@ -82,7 +85,7 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
         {(boatData ?? []).length === 0 ? (
           <Flash error={t("noBoats")} />
         ) : (
-          <TripBookingForm templates={templates} boats={boatData ?? []} date={date} labels={labels} lang={lang} />
+          <TripBookingForm templates={templates} boats={boatData ?? []} hotels={hotels ?? []} date={date} labels={labels} lang={lang} />
         )}
       </>
     );
@@ -143,9 +146,10 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
   const { data: trip } = await supabase.from("departure_availability").select("*").eq("id", departureId).maybeSingle<Availability>();
   if (!trip) return <Flash error={t("noResults")} />;
 
-  const [{ data: tickets }, { data: product }] = await Promise.all([
+  const [{ data: tickets }, { data: product }, { data: hotels }] = await Promise.all([
     supabase.from("ticket_types").select("id, name_en, name_es, price").eq("product_id", trip.product_id).eq("active", true).order("price", { ascending: false }),
     supabase.from("products").select("base_guests").eq("id", trip.product_id).single(),
+    hotelList(),
   ]);
 
   const bookingKeys = [...customerKeys, "tickets", "guests", "estimate", "priceOverride", "priceOverrideHint", "seatsLeft", "baseGuests"] as const;
@@ -169,6 +173,7 @@ export default async function NewBookingPage({ searchParams }: PageProps<"/booki
         seatsLeft={trip.seats_left}
         baseGuests={product?.base_guests ?? null}
         tickets={(tickets ?? []).map((tt) => ({ id: tt.id, name: lang === "es" ? tt.name_es : tt.name_en }))}
+        hotels={hotels ?? []}
         labels={labels}
         lang={lang}
       />

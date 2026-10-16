@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { canBook, pageContext } from "@/lib/auth";
-import { fmtDateTime, fmtMoney } from "@/lib/format";
+import { fmtDate, fmtDateTime, fmtMoney, TZ_OFFSET } from "@/lib/format";
 import type { Availability } from "@/lib/types";
 import { ChangeHistory, type Change } from "@/components/change-history";
 import { EditTripForm } from "@/components/edit-trip-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Stepper } from "@/components/stepper";
-import { Button, ButtonLink, Card, Field, Flash, Grid, Input, MoneyInput, PageTitle, Select, Textarea } from "@/components/ui";
-import { changeGuests, rescheduleBooking, setBookingStatus, updateBooking } from "../actions";
+import { Badge, Button, ButtonLink, Card, Field, Flash, Grid, Input, MoneyInput, PageTitle, Select, Textarea } from "@/components/ui";
+import { changeGuests, rescheduleBooking, setBookingStatus, updateBooking, updateHotelDetails } from "../actions";
 
 type Booking = {
   id: number;
@@ -18,6 +18,7 @@ type Booking = {
   channel: string;
   ota_name: string | null;
   ota_reference: string | null;
+  hotel_id: number | null;
   hotel_code: string | null;
   guests: number;
   total_price: number;
@@ -36,6 +37,14 @@ type Booking = {
   };
   booking_items: { id: number; description: string; quantity: number; unit_price: number }[];
   staff: { full_name: string } | null;
+  hotels: { name: string } | null;
+};
+
+type Commission = {
+  commission_pct: number;
+  commission_amount: number;
+  status: "owed" | "paid" | "cancelled";
+  paid_at: string | null;
 };
 
 export default async function BookingPage({ params, searchParams }: PageProps<"/bookings/[id]">) {
@@ -46,14 +55,14 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
 
   const { data } = await supabase
     .from("bookings")
-    .select("*, customers(*), booking_items(*), staff(full_name)")
+    .select("*, customers(*), booking_items(*), staff(full_name), hotels(name)")
     .eq("id", id)
     .maybeSingle();
   if (!data) notFound();
   const b = data as unknown as Booking;
 
   const editable = canBook(staff.role);
-  const [{ data: trip }, { data: product }, { data: boatData }, { count: customerBookings }, { data: history }] = await Promise.all([
+  const [{ data: trip }, { data: product }, { data: boatData }, { count: customerBookings }, { data: history }, { data: commission }] = await Promise.all([
     supabase.from("departure_availability").select("*").eq("id", b.departure_id).single<Availability>(),
     supabase
       .from("departures")
@@ -73,6 +82,10 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
           .order("changed_at", { ascending: false })
           .limit(50)
       : Promise.resolve({ data: [] }),
+    // The hotel's commission (admin and office only).
+    editable && b.channel === "hotel"
+      ? supabase.from("commissions").select("commission_pct, commission_amount, status, paid_at").eq("booking_id", b.id).maybeSingle<Commission>()
+      : Promise.resolve({ data: null }),
   ]);
   const boats = boatData ?? [];
   const prod = (product?.products ?? null) as unknown as {
@@ -137,7 +150,13 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
           <div><dt className="text-slate-500">{t("guests")}</dt><dd className="font-medium">{b.guests}</dd></div>
           <div>
             <dt className="text-slate-500">{t("channel")}</dt>
-            <dd className="font-medium">{t(`channel_${b.channel}` as never)}{b.ota_name ? ` · ${b.ota_name}` : ""}{b.ota_reference ? ` (${b.ota_reference})` : ""}</dd>
+            <dd className="font-medium">
+              {t(`channel_${b.channel}` as never)}
+              {b.ota_name ? ` · ${b.ota_name}` : ""}
+              {b.ota_reference ? ` (${b.ota_reference})` : ""}
+              {b.hotels ? ` · ${b.hotels.name}` : ""}
+              {b.hotel_code && <div className="font-mono font-normal">{b.hotel_code}</div>}
+            </dd>
           </div>
           <div><dt className="text-slate-500">{t("createdAt")}</dt><dd>{fmtDateTime(b.created_at, lang)}{b.staff ? ` · ${b.staff.full_name}` : ""}</dd></div>
         </dl>
@@ -168,6 +187,43 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
           </tbody>
         </table>
       </Card>
+
+      {editable && b.channel === "hotel" && (
+        <Card title={`${t("hotel")} · ${b.hotels?.name ?? ""}`}>
+          <form action={updateHotelDetails} className="flex flex-col gap-4">
+            <input type="hidden" name="id" value={b.id} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("hotelCode")} hint={t("hotelCodeHint")}>
+                <Input name="hotel_code" defaultValue={b.hotel_code ?? ""} required autoComplete="off" />
+              </Field>
+              <Field label={t("commissionPct")} hint={commission?.status === "paid" ? undefined : t("commissionPctHint")}>
+                <Input
+                  name="commission_pct"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  defaultValue={commission ? Number(commission.commission_pct) : ""}
+                  disabled={!commission || commission.status === "paid"}
+                  className="sm:max-w-[10rem]"
+                />
+              </Field>
+            </div>
+            {commission && (
+              <p className="text-sm text-slate-700">
+                {t("commission")}: <strong className="text-slate-900">{fmtMoney(commission.commission_amount)}</strong>{" "}
+                <Badge tone={commission.status === "paid" ? "green" : commission.status === "owed" ? "amber" : "slate"}>
+                  {t(`comm_${commission.status}`)}
+                </Badge>
+                {commission.paid_at && <> · {t("paidOn")} {fmtDate(`${commission.paid_at}T12:00:00${TZ_OFFSET}`, lang)}</>}
+              </p>
+            )}
+            <div>
+              <Button type="submit" variant="secondary">{t("saveHotelDetails")}</Button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       <form action={updateBooking}>
         <input type="hidden" name="id" value={b.id} />

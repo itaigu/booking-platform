@@ -43,6 +43,20 @@ function bookingArgs(form: FormData) {
   };
 }
 
+// A hotel booking: the hotel, its code and the commission % instead of the channel details.
+function hotelArgs(form: FormData) {
+  const { p_customer, p_total_override, p_occasion, p_special_requests, p_internal_notes } = bookingArgs(form);
+  return {
+    p_hotel: { hotel_id: num(form, "hotel_id"), code: str(form, "hotel_code"), commission_pct: str(form, "commission_pct") },
+    p_customer,
+    p_total_override,
+    p_occasion,
+    p_special_requests,
+    p_internal_notes,
+  };
+}
+const isHotel = (form: FormData) => str(form, "channel") === "hotel";
+
 // New booking: creates the trip (with its own details) and the booking together.
 // Returns the error so the form keeps everything that was typed.
 export async function createTripBooking(form: FormData): Promise<{ error: string }> {
@@ -68,19 +82,19 @@ export async function createTripBooking(form: FormData): Promise<{ error: string
           max_guests: num(form, "max_guests"),
           min_guests: num(form, "min_guests"),
         };
+  const p_trip = {
+    name: str(form, "name"),
+    kind,
+    boat_id: num(form, "boat_id"),
+    starts_at: isDay(date) && /^\d{2}:\d{2}$/.test(time) ? `${date}T${time}:00${TZ_OFFSET}` : null,
+    duration_minutes: num(form, "duration_minutes"),
+    buffer_minutes: num(form, "buffer_minutes"),
+    ...trip,
+  };
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("create_trip_booking", {
-    p_trip: {
-      name: str(form, "name"),
-      kind,
-      boat_id: num(form, "boat_id"),
-      starts_at: isDay(date) && /^\d{2}:\d{2}$/.test(time) ? `${date}T${time}:00${TZ_OFFSET}` : null,
-      duration_minutes: num(form, "duration_minutes"),
-      buffer_minutes: num(form, "buffer_minutes"),
-      ...trip,
-    },
-    ...bookingArgs(form),
-  });
+  const { data, error } = isHotel(form)
+    ? await supabase.rpc("create_hotel_booking", { ...hotelArgs(form), p_trip })
+    : await supabase.rpc("create_trip_booking", { p_trip, ...bookingArgs(form) });
   if (error) return { error: translateError(error.message, lang) };
   revalidatePath("/calendar");
   redirect(`/bookings/${data}`);
@@ -90,12 +104,14 @@ export async function createBooking(form: FormData) {
   const departureId = str(form, "departure_id");
   const { supabase, fail, go } = await actionContext(`/bookings/new?departure=${departureId}`, ["admin", "office"]);
   const tickets = str(form, "tickets");
-  const { data, error } = await supabase.rpc("create_booking", {
+  const trip = {
     p_departure_id: Number(departureId),
     p_tickets: tickets ? JSON.parse(tickets) : null,
     p_guests: num(form, "guests"),
-    ...bookingArgs(form),
-  });
+  };
+  const { data, error } = isHotel(form)
+    ? await supabase.rpc("create_hotel_booking", { ...hotelArgs(form), ...trip })
+    : await supabase.rpc("create_booking", { ...trip, ...bookingArgs(form) });
   if (error) fail(error.message);
   revalidatePath("/calendar");
   go(`/bookings/${data}`, {});
@@ -176,5 +192,30 @@ export async function changeGuests(form: FormData) {
   if (error) fail(error.message);
   revalidatePath("/calendar");
   revalidatePath(back);
+  go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
+}
+
+// A hotel booking: fix the hotel's code, or give this booking its own commission %.
+export async function updateHotelDetails(form: FormData) {
+  const id = str(form, "id");
+  const back = `/bookings/${id}`;
+  const { supabase, fail, go, lang } = await actionContext(back, ["admin", "office"]);
+  const code = str(form, "hotel_code");
+  if (!code) fail("Enter the hotel code");
+  const { error } = await supabase.from("bookings").update({ hotel_code: code }).eq("id", id).eq("channel", "hotel");
+  if (error) fail(error.message);
+
+  const pct = num(form, "commission_pct");
+  if (pct !== null) {
+    if (!(pct >= 0 && pct <= 100)) fail("The commission must be between 0 and 100");
+    const { error: commError } = await supabase
+      .from("commissions")
+      .update({ commission_pct: pct })
+      .eq("booking_id", id)
+      .neq("status", "paid");
+    if (commError) fail(commError.message);
+  }
+  revalidatePath(back);
+  revalidatePath("/commissions");
   go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
 }

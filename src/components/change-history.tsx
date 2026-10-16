@@ -32,6 +32,10 @@ const labels: Record<string, Key> = {
   ends_at: "histEndsAt",
   boat_id: "boat",
   amount: "total",
+  hotel_code: "hotelCode",
+  commission_pct: "commissionPct",
+  commission_amount: "commission",
+  paid_at: "paidOn",
 };
 const money = new Set(["total_price", "amount", "commission_amount"]);
 const times = new Set(["starts_at", "ends_at"]);
@@ -53,12 +57,23 @@ export function ChangeHistory({
     if (money.has(field)) return fmtMoney(v as number);
     if (times.has(field)) return fmtDateTime(String(v), lang);
     if (field === "boat_id") return boats.get(Number(v)) ?? String(v);
-    if (field === "status") return t(`${table === "departures" ? "dep" : "status"}_${v}` as Key) ?? String(v);
+    if (field === "status") {
+      const group = table === "departures" ? "dep" : table === "commissions" ? "comm" : "status";
+      return t(`${group}_${v}` as Key) ?? String(v);
+    }
     const s = String(v);
     return s.length > 80 ? `${s.slice(0, 80)}…` : s;
   };
-  const prefix = (table: string) =>
-    table === "departures" ? `${t("trip")} · ` : table === "customers" ? `${t("customer")} · ` : "";
+  const prefix = (table: string, field: string) =>
+    table === "departures"
+      ? `${t("trip")} · `
+      : table === "customers"
+        ? `${t("customer")} · `
+        : table === "commissions" && (field === "status" || field === "paid_at")
+          ? `${t("commission")} · `
+          : "";
+  const created = (table: string) =>
+    t(table === "bookings" ? "histCreated" : table === "payments" ? "histPayment" : table === "commissions" ? "histCommission" : "histAdded");
 
   return (
     <ol className="space-y-3 text-sm">
@@ -69,7 +84,7 @@ export function ChangeHistory({
             {e.staff ? ` · ${e.staff.full_name}` : ""}
           </div>
           {e.action === "insert" ? (
-            <div>{e.table_name === "bookings" ? t("histCreated") : `${t(e.table_name === "payments" ? "histPayment" : "histAdded")}`}</div>
+            <div>{created(e.table_name)}</div>
           ) : e.action === "delete" ? (
             <div>{t("histDeleted")}</div>
           ) : (
@@ -77,7 +92,7 @@ export function ChangeHistory({
               {Object.entries(e.changes).map(([field, [from, to]]) => (
                 <li key={field}>
                   <span className="text-slate-600">
-                    {prefix(e.table_name)}
+                    {prefix(e.table_name, field)}
                     {labels[field] ? t(labels[field]) : field}:
                   </span>{" "}
                   {field === "departure_id" ? (

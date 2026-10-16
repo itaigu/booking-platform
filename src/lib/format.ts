@@ -113,3 +113,20 @@ export function fmtClock(min: number, lang: Lang, short = false) {
 export function weekStartOf(day: string) {
   return addDays(day, -((new Date(`${day}T12:00:00Z`).getUTCDay() + 6) % 7));
 }
+
+// A month as YYYY-MM.
+export function isMonth(s: string | undefined): s is string {
+  return !!s && /^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+}
+
+// The month after (or before, with n = -1) a YYYY-MM month.
+export function addMonths(month: string, n: number) {
+  const d = new Date(`${month}-01T12:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() + n);
+  return d.toISOString().slice(0, 7);
+}
+
+// "2026-10" → "octubre de 2026" / "October 2026".
+export function fmtMonth(month: string, lang: Lang) {
+  return cap(new Intl.DateTimeFormat(locale(lang), { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(`${month}-15T12:00:00Z`)));
+}

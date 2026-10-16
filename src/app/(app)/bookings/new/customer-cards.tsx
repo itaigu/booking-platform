@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Card, Field, Grid, Input, Select, Textarea } from "@/components/ui";
+import type { HotelOption } from "@/lib/types";
 
-const channels = ["phone", "whatsapp", "walk_in", "ota", "other"] as const;
+const channels = ["phone", "whatsapp", "walk_in", "hotel", "ota", "other"] as const;
 
 type Props = { labels: Record<string, string>; lang: "es" | "en" };
 
@@ -39,16 +40,26 @@ export function CustomerCard({ labels: l, lang }: Props) {
 }
 
 // Channel, occasion and notes, the same on both booking forms.
-export function DetailsCard({ labels: l }: Pick<Props, "labels">) {
+// A hotel booking also needs the hotel, its code and the commission %.
+export function DetailsCard({ labels: l, hotels }: Pick<Props, "labels"> & { hotels: HotelOption[] }) {
   const [channel, setChannel] = useState<string>("phone");
+  const [hotelId, setHotelId] = useState("");
+  const [pct, setPct] = useState("");
+  const pickHotel = (id: string) => {
+    setHotelId(id);
+    const h = hotels.find((x) => String(x.id) === id);
+    setPct(h ? String(Number(h.default_commission_pct)) : "");
+  };
   return (
     <Card title={l.details}>
       <Grid>
         <Field label={l.channel}>
           <Select name="channel" value={channel} onChange={(e) => setChannel(e.target.value)}>
-            {channels.map((c) => (
-              <option key={c} value={c}>{l[`channel_${c}`]}</option>
-            ))}
+            {channels
+              .filter((c) => c !== "hotel" || hotels.length > 0)
+              .map((c) => (
+                <option key={c} value={c}>{l[`channel_${c}`]}</option>
+              ))}
           </Select>
         </Field>
         {channel === "ota" ? (
@@ -58,6 +69,33 @@ export function DetailsCard({ labels: l }: Pick<Props, "labels">) {
             </Field>
             <Field label={l.otaReference}>
               <Input name="ota_reference" />
+            </Field>
+          </>
+        ) : channel === "hotel" ? (
+          <>
+            <Field label={l.hotel}>
+              <Select name="hotel_id" value={hotelId} onChange={(e) => pickHotel(e.target.value)} required>
+                <option value="">{l.chooseHotel}</option>
+                {hotels.map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={l.hotelCode} hint={l.hotelCodeHint}>
+              <Input name="hotel_code" required autoComplete="off" />
+            </Field>
+            <Field label={l.commissionPct} hint={l.commissionPctHint}>
+              <Input
+                name="commission_pct"
+                type="number"
+                min={0}
+                max={100}
+                step="0.01"
+                value={pct}
+                onChange={(e) => setPct(e.target.value)}
+                required
+                className="sm:max-w-[10rem]"
+              />
             </Field>
           </>
         ) : (

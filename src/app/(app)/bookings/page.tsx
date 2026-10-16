@@ -11,12 +11,14 @@ type Row = {
   status: string;
   channel: string;
   total_price: number;
+  hotel_code: string | null;
+  hotels: { name: string } | null;
   customers: { full_name: string; email: string | null; phone: string | null } | null;
   departures: { starts_at: string; products: { name_en: string; name_es: string } | null } | null;
 };
 
 const select =
-  "id, booking_number, guests, status, channel, total_price, customers(full_name, email, phone), departures!inner(starts_at, products(name_en, name_es))";
+  "id, booking_number, guests, status, channel, total_price, hotel_code, hotels(name), customers(full_name, email, phone), departures!inner(starts_at, products(name_en, name_es))";
 
 export default async function BookingsPage({ searchParams }: PageProps<"/bookings">) {
   const sp = await searchParams;
@@ -86,7 +88,10 @@ export default async function BookingsPage({ searchParams }: PageProps<"/booking
                       <div className="text-xs text-slate-500">{b.departures && fmtDateTime(b.departures.starts_at, lang)}</div>
                     </td>
                     <td className="py-2 pr-3">{b.guests}</td>
-                    <td className="py-2 pr-3">{t(`channel_${b.channel}` as never)}</td>
+                    <td className="py-2 pr-3">
+                      {b.hotels ? b.hotels.name : t(`channel_${b.channel}` as never)}
+                      {b.hotel_code && <div className="font-mono text-xs text-slate-500">{b.hotel_code}</div>}
+                    </td>
                     <td className="py-2 pr-3">{fmtMoney(b.total_price)}</td>
                     <td className="py-2"><StatusBadge status={b.status} label={t(`status_${b.status}` as never)} /></td>
                   </tr>

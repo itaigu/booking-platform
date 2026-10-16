@@ -34,7 +34,7 @@ The plan may change after talking with the team about what they really need.
 | --- | --- |
 | 1. Set up the basics | Done |
 | 2. Core staff dashboard | In progress |
-| 3. Hotel bookings and commissions | Not started |
+| 3. Hotel bookings and commissions | In progress |
 | 4. Everything else, switch off Rezdy | Not started |
 
 ## Log
@@ -74,6 +74,15 @@ The plan may change after talking with the team about what they really need.
   - Security clean-up in Supabase and indexes so searches stay fast with many bookings.
   - Automatic tests for the database rules and the code, run by GitHub on every change.
   - Database update: `20261016000000_review_fixes.sql`. Claude ran it in Supabase in 7 parts (`review_fixes_1` to `review_fixes_7` in the migration history). itai pasted the function `update_booking_guests` (change the number of guests) in the SQL Editor, because Supabase asks for an extra confirmation before creating it that can't reach the chat.
+- Hotels and commissions:
+  - Hotels page (admin): name, contact, phone, email, commission % and active.
+  - Both booking forms take hotel bookings: choose "Hotel" as the channel, then the hotel, its code and the commission % (filled in from the hotel, can be changed for one booking). A code can be used only once per hotel.
+  - The database creates the commission with every hotel booking. Its amount follows the booking total; cancelling the booking cancels it and reactivating brings it back. A no-show keeps it.
+  - On the booking page: fix the hotel code or change the % for that booking.
+  - Commissions page (admin and office): totals per hotel for a month (by trip date), the bookings behind each total, "Mark as paid" with the payment date (only trips that already happened), "Undo payment" (admin), and CSV download for Excel.
+  - Bookings can be searched by hotel code.
+  - Not done yet: a hotel price list. For now the hotel price is typed in each booking.
+  - Database update: `20261016010000_hotel_bookings.sql` (not yet in Supabase; Claude applies it once itai says OK).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
