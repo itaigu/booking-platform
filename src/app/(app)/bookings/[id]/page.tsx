@@ -5,6 +5,7 @@ import { fmtDate, fmtDateTime, fmtMoney, TZ_OFFSET } from "@/lib/format";
 import type { Availability } from "@/lib/types";
 import { ChangeHistory, type Change } from "@/components/change-history";
 import { EditTripForm } from "@/components/edit-trip-form";
+import { TripCrewForm } from "@/components/trip-crew-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Stepper } from "@/components/stepper";
 import { Badge, Button, ButtonLink, Card, Field, Flash, Grid, Input, MoneyInput, PageTitle, Select, Textarea } from "@/components/ui";
@@ -68,7 +69,7 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
     supabase.from("departure_availability").select("*").eq("id", b.departure_id).single<Availability>(),
     supabase
       .from("departures")
-      .select("products(kind, one_off, base_guests, extra_guest_price, extra_hour_price)")
+      .select("crew, products(kind, one_off, base_guests, extra_guest_price, extra_hour_price)")
       .eq("id", b.departure_id)
       .single(),
     supabase.from("boats").select("id, name, max_guests, active").order("name"),
@@ -333,6 +334,10 @@ export default async function BookingPage({ params, searchParams }: PageProps<"/
             </div>
           </form>
         </Card>
+      )}
+
+      {editable && b.status === "confirmed" && trip && trip.status === "scheduled" && (
+        <TripCrewForm departureId={b.departure_id} crew={(product as { crew?: string | null } | null)?.crew ?? null} back={`/bookings/${b.id}`} t={t} />
       )}
 
       {editable && b.status === "confirmed" && trip && trip.status === "scheduled" && onlyThisTrip && (

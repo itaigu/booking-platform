@@ -39,6 +39,7 @@ const labels: Record<string, Key> = {
   pickup_time: "pickupTime",
   pickup_place: "pickupPlace",
   checked_in_at: "checkIn",
+  crew: "crewOnBoard",
 };
 // Fields kept out of the history (who did the check-in is already on the line).
 const hidden = new Set(["checked_in_by"]);
