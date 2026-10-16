@@ -1,6 +1,5 @@
-import type { Lang, T } from "@/lib/i18n";
-import { cap } from "@/lib/format";
-import { choiceCard, Field, FormSection as Section, Input, MoneyInput, Select } from "./ui";
+import type { T } from "@/lib/i18n";
+import { Field, FormSection as Section, Input, MoneyInput } from "./ui";
 import { Stepper } from "./stepper";
 import { TourKindSwitch } from "./tour-kind-switch";
 
@@ -18,47 +17,22 @@ export type Product = {
   extra_guest_price: number | null;
   max_extra_hours: number;
   extra_hour_price: number | null;
-  season_start: string | null;
-  season_end: string | null;
   active: boolean;
 };
 
-// Form fields for creating or editing a tour, in sections.
+// Form fields for creating or editing a tour: only the basics.
 // `boatMax` is the biggest linked boat, used when the tour has no guest limit yet.
-export function TourFields({ p, t, lang, boatMax }: { p?: Product; t: T; lang: Lang; boatMax?: number }) {
+// `guestPrice` is a shared tour's price per person.
+export function TourFields({ p, t, boatMax, guestPrice }: { p?: Product; t: T; boatMax?: number; guestPrice?: number | null }) {
   const kind = p?.kind ?? "private";
   const baseGuests = p?.base_guests ?? 4;
   const cap_ = p?.max_guests ?? boatMax;
   const extraGuests = p?.kind === "private" && cap_ ? Math.max(cap_ - baseGuests, 0) : 0;
   const sl = { less: t("less"), more: t("more") };
 
-  const monthFmt = new Intl.DateTimeFormat(lang === "es" ? "es-MX" : "en-US", { month: "long", timeZone: "UTC" });
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: String(i + 1).padStart(2, "0"),
-    label: cap(monthFmt.format(Date.UTC(2000, i, 1))),
-  }));
-  const monthDays = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, "0"));
-  const [sm, sd] = (p?.season_start ?? "12-15").split("-");
-  const [em, ed] = (p?.season_end ?? "04-15").split("-");
-  const seasonPicker = (key: "season_start" | "season_end", label: string, m: string, d: string) => (
-    <Field label={label} group>
-      <div className="flex gap-2">
-        <Select name={`${key}_m`} aria-label={`${label}: ${t("month")}`} defaultValue={m} className="min-w-0 flex-1">
-          {months.map((mo) => (
-            <option key={mo.value} value={mo.value}>{mo.label}</option>
-          ))}
-        </Select>
-        <Select name={`${key}_d`} aria-label={`${label}: ${t("day")}`} defaultValue={d} className="w-20">
-          {monthDays.map((dd) => (
-            <option key={dd} value={dd}>{Number(dd)}</option>
-          ))}
-        </Select>
-      </div>
-    </Field>
-  );
 
   return (
-    <div className="group/tour flex flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <Section title={t("secBasics")}>
         <div className="sm:col-span-2">
           <Field label={t("tourName")}>
@@ -107,6 +81,9 @@ export function TourFields({ p, t, lang, boatMax }: { p?: Product; t: T; lang: L
             ),
             shared: (
               <>
+                <Field label={t("pricePerPerson")}>
+                  <MoneyInput name="guest_price" defaultValue={guestPrice ?? ""} required />
+                </Field>
                 <Field label={t("maxGuestsShared")} group>
                   <Stepper
                     name="shared_max_guests"
@@ -121,7 +98,6 @@ export function TourFields({ p, t, lang, boatMax }: { p?: Product; t: T; lang: L
                 <Field label={t("minGuests")} group>
                   <Stepper name="min_guests" defaultValue={p?.min_guests ?? 1} min={1} max={200} unit="pax" label={t("minGuests")} {...sl} />
                 </Field>
-                <p className="text-xs text-slate-500 sm:col-span-2">{t("sharedPricesLater")}</p>
               </>
             ),
           }}
@@ -137,26 +113,6 @@ export function TourFields({ p, t, lang, boatMax }: { p?: Product; t: T; lang: L
         </Field>
       </Section>
 
-      <Section title={t("secSeason")} desc={t("secSeasonDesc")}>
-        <fieldset className="sm:col-span-2">
-          <legend className="sr-only">{t("secSeason")}</legend>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className={choiceCard}>
-              <input type="radio" name="season" value="all" defaultChecked={!p?.season_start} className="sr-only" />
-              <span className="font-semibold text-slate-900">{t("allYear")}</span>
-            </label>
-            <label className={choiceCard}>
-              <input type="radio" name="season" value="seasonal" defaultChecked={!!p?.season_start} className="sr-only" />
-              <span className="font-semibold text-slate-900">{t("seasonalOnly")}</span>
-            </label>
-          </div>
-        </fieldset>
-        <div className="hidden gap-4 group-has-[input[name=season][value=seasonal]:checked]/tour:grid sm:col-span-2 sm:grid-cols-2">
-          {seasonPicker("season_start", t("seasonStart"), sm, sd)}
-          {seasonPicker("season_end", t("seasonEnd"), em, ed)}
-          <p className="text-xs text-slate-500 sm:col-span-2">{t("seasonHint")}</p>
-        </div>
-      </Section>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export default async function ToursPage({ searchParams }: PageProps<"/tours">) {
       {adding && (
         <Card title={t("newTour")}>
           <form action={saveTour}>
-            <TourFields t={t} lang={lang} />
+            <TourFields t={t} />
             <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
               <ButtonLink variant="secondary" href="/tours">{t("cancel")}</ButtonLink>
               <Button type="submit">{t("createTour")}</Button>

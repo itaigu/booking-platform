@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Button, Card, Field, Input } from "@/components/ui";
 import { createBooking, getQuote } from "../actions";
-import { CustomerCards } from "./customer-cards";
+import { CustomerCard, DetailsCard } from "./customer-cards";
 
 type Props = {
   departureId: number;
@@ -90,7 +90,8 @@ export function BookingForm({ departureId, kind, seatsLeft, baseGuests, tickets,
         </div>
       </Card>
 
-      <CustomerCards labels={l} lang={lang} />
+      <CustomerCard labels={l} lang={lang} />
+      <DetailsCard labels={l} />
 
       <Button type="submit" disabled={totalGuests < 1 || totalGuests > seatsLeft}>
         {l.createBooking}
