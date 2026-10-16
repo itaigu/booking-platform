@@ -76,6 +76,13 @@ export default async function StaffPage({ searchParams }: PageProps<"/staff">) {
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="active" defaultChecked={s.active} disabled={s.id === me.id} /> {t("active")}
               </label>
+              {canAdd && (
+                <div className="col-span-2">
+                  <Field label={t("resetPassword")} hint={t("resetPasswordHint")}>
+                    <Input name="password" type="text" minLength={8} autoComplete="off" />
+                  </Field>
+                </div>
+              )}
               <Button type="submit">{t("save")}</Button>
             </form>
             </details>

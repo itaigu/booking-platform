@@ -56,11 +56,24 @@ The plan may change after talking with the team about what they really need.
 - Made the dashboard look and work more like professional charter software: grouped sidebar with a logo, a cleaner calendar header (tap the date to jump to any day), trip cards with booked/capacity and a status label (Full, Booked, Below min., Cancelled), maintenance blocks and a "now" line in the week view, a day-by-day list for the week on phones, and a tour form in sections with price boxes in USD and month/day lists for the season.
 - Extra hours are saved on private tours, but bookings don't add or charge them yet (needs an extra-hours counter on New booking and a quote_booking change).
 - Every trip is different: New booking now creates the trip itself, with its name, type (private or shared), boat, exact date and time, duration, turnaround time, guests included and extra guests, extra hours and prices, and shows the total as you fill it in. Tours are now optional templates that fill in the form (and are still used by Schedules). To add guests to a shared trip that is already on the calendar, use the button at the top of New booking. Database update: `20261015010000_one_off_trips.sql` (Claude ran it directly in Supabase).
-- Still to do: bookings on a one-off trip can't be moved to another date yet (the trip's date and time can't be edited yet either).
+- Still to do: bookings on a one-off trip can't be moved to another date yet (the trip's date and time can't be edited yet either). Done on 2026-10-16.
 
 ### 2026-10-16
 - Tours now only hold the basics: name, type, price (a shared tour has one price per person), guests, extra guests and hours, and duration. The season and the seasonal/sale prices sections were removed.
 - New booking now starts with the customer, then a "Tipo de paseo" dropdown that fills in the trip details (all still editable).
+- External review of the whole project, then fixes for what it found:
+  - A trip's date, time, boat and duration can be changed (from the booking or the trip page); all its bookings move with it.
+  - A booking's number of guests (and extra hours on a private trip) can be changed; the price is worked out again.
+  - Cancelling the booking of a one-off trip also cancels the trip and frees the boat. Reactivating brings it back if the boat is still free.
+  - History of changes on every booking: who changed what, when, and the old value. Nobody can edit it.
+  - A whole trip can be cancelled at once (bad weather or another reason), with all its bookings.
+  - Captains and crew only see the guest list, without prices, notes or payments.
+  - The system now refuses to make a boat or tour smaller than the guests already booked, and refuses maintenance blocks on top of live trips.
+  - A new booking reuses the customer if the email (or the name and phone) is already saved.
+  - Admins can set a new password for staff who forget theirs (Staff page).
+  - Security clean-up in Supabase and indexes so searches stay fast with many bookings.
+  - Automatic tests for the database rules and the code, run by GitHub on every change.
+  - Database update: `20261016000000_review_fixes.sql` (Claude ran it directly in Supabase).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

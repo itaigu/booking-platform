@@ -27,6 +27,8 @@ These hold no matter which screen or channel a booking comes from:
 - **Commission is frozen at sale time.** The % is copied onto each booking.
 - **Cancelling a booking cancels its unpaid commission.**
 - **Only logged-in, active staff** can see or change anything.
+- **No trips on blocked boats,** and no blocks on top of live trips.
+- **Every change is kept in a history** that can't be edited.
 
 ## Still to decide
 
@@ -49,3 +51,33 @@ These hold no matter which screen or channel a booking comes from:
 ## Boat colors (`20261014020000_boat_colors.sql`)
 
 - Each boat has a `color` used for its column and trips on the day calendar.
+
+## Review fixes (`20261016000000_review_fixes.sql`)
+
+- **Change a trip:** `update_departure` changes a trip's date, time, boat and
+  duration (and the name of a one-off trip). Every booking on it moves too.
+- **Change guests:** `update_booking_guests` changes the guests (and the extra
+  hours of a one-off private trip) and works out the price again.
+- **One-off trips follow their booking:** cancelling the last booking of a
+  one-off trip cancels the trip and frees the boat; reactivating the booking
+  brings the trip back if the boat is still free.
+- **Cancel a whole trip:** `cancel_departure` cancels a trip and all its
+  confirmed bookings, marked as bad weather or not.
+- **History:** `change_log` keeps every change to bookings, trips, customers,
+  payments and commissions (old value, new value, who and when). Nobody can
+  edit or delete it. Admin and office can read it.
+- **Captains and crew** can't read bookings, customers or payments directly.
+  They see the guest list through `trip_manifest` (no prices) and seat counts
+  through `departure_availability`.
+- **Capacity and blocks are checked again** when a boat or tour gets smaller,
+  a trip changes boat, or a maintenance block is added (it can't go on top of
+  live trips).
+- **Returning customers:** a new booking reuses the customer when the email
+  matches, or both the name and the phone match.
+
+## Tests
+
+`supabase/tests/run.sh` builds the whole database from the migrations on an
+empty PostgreSQL database and checks these rules. GitHub runs it on every
+pull request (`.github/workflows/checks.yml`), together with the code checks.
+Never point it at the real Supabase project.

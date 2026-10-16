@@ -20,7 +20,7 @@ const select =
 
 export default async function BookingsPage({ searchParams }: PageProps<"/bookings">) {
   const sp = await searchParams;
-  const { supabase, staff, lang, t } = await pageContext();
+  const { supabase, staff, lang, t } = await pageContext(["admin", "office", "dock"]);
   const q = ((sp.q as string) ?? "").trim();
   const date = isDay(sp.date as string) ? (sp.date as string) : "";
 
