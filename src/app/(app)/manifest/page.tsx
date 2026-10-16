@@ -7,6 +7,7 @@ import type { Availability } from "@/lib/types";
 import { DateJump } from "@/components/date-jump";
 import { Badge, Flash, PageTitle } from "@/components/ui";
 import { CheckInButton } from "./check-in-button";
+import { ManifestTools } from "./manifest-tools";
 import { PrintButton } from "./print-button";
 
 // One booking on the day's manifest (from day_manifest()).
@@ -36,6 +37,8 @@ type Row = {
 type Crew = { departure_id: number; position: "captain" | "crew"; staff: { full_name: string } | null };
 
 const show = ["all", "arrived", "missing"] as const;
+// Each view is the manifest for a different job. Only the dock (check-in) view so far.
+const views = ["dock"] as const;
 
 // "11:40:00" → "11:40 a.m."
 const clock = (time: string | null, lang: Lang) => {
@@ -49,6 +52,7 @@ export default async function ManifestPage({ searchParams }: PageProps<"/manifes
   const { supabase, staff, lang, t } = await pageContext();
   const date = isDay(sp.date as string) ? (sp.date as string) : todayLocal();
   const filter = show.find((s) => s === sp.show) ?? "all";
+  const view = views.find((v) => v === sp.view) ?? "dock";
   const money = staff.role !== "crew";
   const canOpenBooking = staff.role !== "crew";
 
@@ -76,7 +80,8 @@ export default async function ManifestPage({ searchParams }: PageProps<"/manifes
   const arrived = rows.filter((r) => r.checked_in_at).reduce((s, r) => s + r.guests, 0);
   const visible = (r: Row) => filter === "all" || (filter === "arrived") === !!r.checked_in_at;
 
-  const q = (d: string, f: string = filter) => `/manifest?date=${d}${f !== "all" ? `&show=${f}` : ""}`;
+  const q = (d: string, f: string = filter, v: string = view) =>
+    `/manifest?date=${d}${f !== "all" ? `&show=${f}` : ""}${v !== "dock" ? `&view=${v}` : ""}`;
   const seg = (on: boolean) =>
     `inline-flex items-center rounded-md px-3 text-sm font-medium ${on ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`;
   const arrow = "grid w-11 place-items-center text-slate-600 hover:bg-slate-50 focus-visible:-outline-offset-2 sm:w-9";
@@ -142,6 +147,13 @@ export default async function ManifestPage({ searchParams }: PageProps<"/manifes
             </span>
           </p>
 
+          <ManifestTools
+            view={view}
+            views={views.map((v) => ({ id: v, label: t("viewDock") }))}
+            hrefFor={Object.fromEntries(views.map((v) => [v, q(date, filter, v)]))}
+            labels={{ view: t("manifestView"), openAll: t("openAll"), closeAll: t("closeAll") }}
+          />
+
           {trips.map((trip) => {
             const list = rows.filter((r) => r.departure_id === trip.id);
             const shown = list.filter(visible);
@@ -151,26 +163,55 @@ export default async function ManifestPage({ searchParams }: PageProps<"/manifes
               .filter((c) => c.departure_id === trip.id && c.staff)
               .sort((a, b) => (a.position === b.position ? 0 : a.position === "captain" ? -1 : 1))
               .map((c) => c.staff!.full_name);
+            // "4 × Adulto, 2 × Pax extra" across the trip's bookings
+            const types = new Map<string, number>();
+            for (const r of list)
+              for (const part of (r.items ?? "").split(", ")) {
+                const m = part.match(/^(\d+) × (.+)$/);
+                if (m) types.set(m[2], (types.get(m[2]) ?? 0) + Number(m[1]));
+              }
+            const guestTypes = [...types].map(([d, n]) => `${n} ${d}`).join(", ");
             const balance = list.reduce((s, r) => s + Number(r.total_price ?? 0) - Number(r.paid ?? 0), 0);
             return (
-              <section key={trip.id} className="mb-4 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm print:break-inside-avoid print:shadow-none">
-                <header className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-slate-200 bg-slate-50 px-4 py-3">
-                  <h2 className="text-base font-semibold text-slate-900">
-                    <Link href={`/departures/${trip.id}`} className="hover:underline">
+              <details
+                key={trip.id}
+                data-trip
+                className="group mb-3 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm print:break-inside-avoid print:shadow-none"
+              >
+                <summary className="flex cursor-pointer list-none items-start gap-3 px-4 py-3 hover:bg-slate-50 group-open:border-b group-open:border-slate-200 group-open:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                  <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 shrink-0 text-slate-500 transition-transform group-open:rotate-90 print:hidden" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                  <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <h2 className="text-base font-semibold text-sky-800">
                       {fmtTime(trip.starts_at, lang)} · {lang === "es" ? trip.product_name_es : trip.product_name_en}
-                    </Link>
-                  </h2>
-                  {trip.status !== "scheduled" && <Badge tone="red">{t("tripCancelledShort")}</Badge>}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-                    <span>{trip.boat_name} ({tripGuests}/{trip.capacity})</span>
-                    {people.length > 0 && <span>{t("crewOnBoard")}: {people.join(", ")}</span>}
-                    <span>{list.length} {t(list.length === 1 ? "bookingOne" : "bookingsCount")}</span>
-                    <span className={tripArrived === tripGuests ? "font-medium text-green-700" : ""}>
-                      {t("arrivedOf").replace("{n}", String(tripArrived)).replace("{m}", String(tripGuests))}
-                    </span>
-                    {money && balance > 0 && <span className="text-red-700">{t("balance")}: {fmtMoney(balance)}</span>}
+                    </h2>
+                    {trip.status !== "scheduled" && <Badge tone="red">{t("tripCancelledShort")}</Badge>}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-700">
+                      <span className="font-medium">{list.length} {t(list.length === 1 ? "bookingOne" : "bookingsCount")}</span>
+                      <span className="font-medium">
+                        {tripGuests} pax{guestTypes ? ` (${guestTypes})` : ""}
+                      </span>
+                      <span>
+                        {trip.boat_name} ({tripGuests}/{trip.capacity}){people.length > 0 ? `, ${people.join(", ")}` : ""}
+                      </span>
+                      <span className={tripArrived === tripGuests ? "font-medium text-green-700" : ""}>
+                        {t("arrivedOf").replace("{n}", String(tripArrived)).replace("{m}", String(tripGuests))}
+                      </span>
+                      {money && balance > 0 && <span className="text-red-700">{t("balance")}: {fmtMoney(balance)}</span>}
+                    </div>
                   </div>
-                </header>
+                  <Link
+                    href={`/departures/${trip.id}`}
+                    title={t("openTrip")}
+                    aria-label={t("openTrip")}
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-white hover:text-slate-900 print:hidden"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />
+                    </svg>
+                  </Link>
+                </summary>
 
                 {shown.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-slate-500">{t("noResults")}</p>
@@ -241,7 +282,7 @@ export default async function ManifestPage({ searchParams }: PageProps<"/manifes
                     </ul>
                   </>
                 )}
-              </section>
+              </details>
             );
           })}
         </>
