@@ -36,9 +36,14 @@ const labels: Record<string, Key> = {
   commission_pct: "commissionPct",
   commission_amount: "commission",
   paid_at: "paidOn",
+  pickup_time: "pickupTime",
+  pickup_place: "pickupPlace",
+  checked_in_at: "checkIn",
 };
+// Fields kept out of the history (who did the check-in is already on the line).
+const hidden = new Set(["checked_in_by"]);
 const money = new Set(["total_price", "amount", "commission_amount"]);
-const times = new Set(["starts_at", "ends_at"]);
+const times = new Set(["starts_at", "ends_at", "checked_in_at"]);
 
 // What changed on a booking, its trip and its customer, newest first.
 export function ChangeHistory({
@@ -89,7 +94,7 @@ export function ChangeHistory({
             <div>{t("histDeleted")}</div>
           ) : (
             <ul>
-              {Object.entries(e.changes).map(([field, [from, to]]) => (
+              {Object.entries(e.changes).filter(([field]) => !hidden.has(field)).map(([field, [from, to]]) => (
                 <li key={field}>
                   <span className="text-slate-600">
                     {prefix(e.table_name, field)}

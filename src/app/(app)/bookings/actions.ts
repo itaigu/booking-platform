@@ -129,6 +129,8 @@ export async function updateBooking(form: FormData) {
       special_requests: str(form, "special_requests") || null,
       internal_notes: str(form, "internal_notes") || null,
       total_price: num(form, "total_price") ?? undefined,
+      pickup_time: /^\d{2}:\d{2}$/.test(str(form, "pickup_time")) ? str(form, "pickup_time") : null,
+      pickup_place: str(form, "pickup_place") || null,
       ota_name: str(form, "ota_name") || null,
       ota_reference: str(form, "ota_reference") || null,
     })
