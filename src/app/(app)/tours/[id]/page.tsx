@@ -1,28 +1,22 @@
 import { notFound } from "next/navigation";
 import { pageContext } from "@/lib/auth";
-import { fmtMoney } from "@/lib/format";
 import { TourFields, type Product } from "@/components/tour-fields";
-import { Button, ButtonLink, Card, Field, Flash, Input, MoneyInput, PageTitle, Select } from "@/components/ui";
-import { addPriceRule, deletePriceRule, saveBoatsForTour, saveTicketType, saveTour } from "../actions";
+import { Button, ButtonLink, Card, Flash, PageTitle } from "@/components/ui";
+import { saveBoatsForTour, saveTour } from "../actions";
 
 export default async function TourPage({ params, searchParams }: PageProps<"/tours/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const { supabase, lang, t } = await pageContext(["admin"]);
+  const { supabase, t } = await pageContext(["admin"]);
 
-  const [{ data: p }, { data: tickets }, { data: boats }, { data: linked }, { data: rules }] = await Promise.all([
-    supabase.from("products").select("*").eq("id", id).maybeSingle<Product>(),
-    supabase.from("ticket_types").select("*").eq("product_id", id).order("id"),
+  const [{ data: p }, { data: tickets }, { data: boats }, { data: linked }] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).eq("one_off", false).maybeSingle<Product>(),
+    supabase.from("ticket_types").select("price").eq("product_id", id).eq("active", true).order("id"),
     supabase.from("boats").select("id, name, max_guests").order("name"),
     supabase.from("product_boats").select("boat_id").eq("product_id", id),
-    supabase.from("price_rules").select("*").eq("product_id", id).order("starts_on"),
   ]);
   if (!p) notFound();
   const linkedIds = new Set((linked ?? []).map((l) => l.boat_id));
-  const ticketName = (tid: number | null) => {
-    const tt = (tickets ?? []).find((x) => x.id === tid);
-    return tt ? tt.name_es || tt.name_en : t("wholeTour");
-  };
   // Biggest boat linked to this tour, for tours saved before they had a guest limit.
   const boatMax = Math.max(0, ...(boats ?? []).filter((b) => linkedIds.has(b.id)).map((b) => b.max_guests)) || undefined;
 
@@ -34,7 +28,7 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
       <Card title={t("details")}>
         <form action={saveTour}>
           <input type="hidden" name="id" value={p.id} />
-          <TourFields p={p} t={t} lang={lang} boatMax={boatMax} />
+          <TourFields p={p} t={t} boatMax={boatMax} guestPrice={tickets?.[0]?.price} />
           <div className="mt-6 flex justify-end gap-2 border-t border-slate-200 pt-4">
             <Button type="submit">{t("saveChanges")}</Button>
           </div>
@@ -54,59 +48,6 @@ export default async function TourPage({ params, searchParams }: PageProps<"/tou
         </form>
       </Card>
 
-      {p.kind === "shared" && (
-        <Card title={t("ticketTypes")}>
-          <div className="space-y-3">
-            {[...(tickets ?? []), null].map((tt) => (
-              <form key={tt?.id ?? "new"} action={saveTicketType} className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:items-end">
-                <input type="hidden" name="product_id" value={p.id} />
-                {tt && <input type="hidden" name="id" value={tt.id} />}
-                <Field label={t("name")}><Input name="name" defaultValue={tt?.name_es || tt?.name_en} placeholder="Adulto" required /></Field>
-                <Field label={t("price")}><MoneyInput name="price" defaultValue={tt?.price} required /></Field>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="active" defaultChecked={tt?.active ?? true} /> {t("active")}
-                </label>
-                <Button type="submit" variant={tt ? "secondary" : "primary"}>{tt ? t("save") : t("add")}</Button>
-              </form>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      <Card title={t("priceRules")}>
-        <ul className="mb-4 divide-y divide-slate-100 text-sm">
-          {(rules ?? []).map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 py-2">
-              <strong>{r.label}</strong>
-              <span>{r.starts_on} → {r.ends_on}</span>
-              <span>{ticketName(r.ticket_type_id)}</span>
-              <span className="flex-1">{r.price !== null ? fmtMoney(r.price) : `-${r.percent_off}%`}</span>
-              <form action={deletePriceRule}>
-                <input type="hidden" name="id" value={r.id} />
-                <input type="hidden" name="product_id" value={p.id} />
-                <Button variant="secondary" type="submit">{t("delete")}</Button>
-              </form>
-            </li>
-          ))}
-        </ul>
-        <form action={addPriceRule} className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:items-end">
-          <input type="hidden" name="product_id" value={p.id} />
-          <Field label={t("label")}><Input name="label" placeholder="High season / Sale -30%" required /></Field>
-          <Field label={t("appliesTo")}>
-            <Select name="ticket_type_id">
-              <option value="">{t("wholeTour")}</option>
-              {(tickets ?? []).map((tt) => (
-                <option key={tt.id} value={tt.id}>{tt.name_es || tt.name_en}</option>
-              ))}
-            </Select>
-          </Field>
-          <Field label={t("from")}><Input name="starts_on" type="date" required /></Field>
-          <Field label={t("to")}><Input name="ends_on" type="date" required /></Field>
-          <Field label={t("percentOff")}><Input name="percent_off" type="number" step="0.01" min={0} max={100} /></Field>
-          <Field label={t("fixedPrice")}><Input name="price" type="number" step="0.01" min={0} /></Field>
-          <Button type="submit">{t("add")}</Button>
-        </form>
-      </Card>
     </>
   );
 }

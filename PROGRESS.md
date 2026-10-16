@@ -58,6 +58,10 @@ The plan may change after talking with the team about what they really need.
 - Every trip is different: New booking now creates the trip itself, with its name, type (private or shared), boat, exact date and time, duration, turnaround time, guests included and extra guests, extra hours and prices, and shows the total as you fill it in. Tours are now optional templates that fill in the form (and are still used by Schedules). To add guests to a shared trip that is already on the calendar, use the button at the top of New booking. Database update: `20261015010000_one_off_trips.sql` (Claude ran it directly in Supabase).
 - Still to do: bookings on a one-off trip can't be moved to another date yet (the trip's date and time can't be edited yet either).
 
+### 2026-10-16
+- Tours now only hold the basics: name, type, price (a shared tour has one price per person), guests, extra guests and hours, and duration. The season and the seasonal/sale prices sections were removed.
+- New booking now starts with the customer, then a "Tipo de paseo" dropdown that fills in the trip details (all still editable).
+
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
 - Do hotels collect payment from the guest, or does the guest pay us?

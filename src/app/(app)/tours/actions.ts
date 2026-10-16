@@ -13,13 +13,7 @@ export async function saveTour(form: FormData) {
   const isPrivate = kind === "private";
   const baseGuests = num(form, "base_guests") ?? 4;
   const extraGuests = num(form, "extra_guests") ?? 0;
-  // Season is stored as "MM-DD" from the month and day lists.
-  const seasonal = str(form, "season") === "seasonal";
-  const monthDay = (key: string) => {
-    const m = str(form, `${key}_m`);
-    const d = str(form, `${key}_d`);
-    return m && d ? `${m}-${d}` : null;
-  };
+  const guestPrice = num(form, "guest_price");
   const row = {
     // One name for both languages.
     name_en: name,
@@ -36,8 +30,9 @@ export async function saveTour(form: FormData) {
     base_price: isPrivate ? num(form, "base_price") : null,
     base_guests: isPrivate ? baseGuests : null,
     extra_guest_price: isPrivate ? num(form, "extra_guest_price") : null,
-    season_start: seasonal ? monthDay("season_start") : null,
-    season_end: seasonal ? monthDay("season_end") : null,
+    // Tours run all year.
+    season_start: null,
+    season_end: null,
     active: form.get("active") === "on",
   };
   if (!name) fail("Enter the tour name");
@@ -51,18 +46,38 @@ export async function saveTour(form: FormData) {
   if (!isPrivate && row.max_guests !== null && row.min_guests > row.max_guests) {
     fail("The minimum can't be more than the seats per trip");
   }
-  if (seasonal && (!row.season_start || !row.season_end)) fail("Choose the season start and end");
+  if (!isPrivate && guestPrice === null) fail("Enter the price per person");
 
+  let productId = Number(id);
   if (id) {
     const { error } = await supabase.from("products").update(row).eq("id", id);
     if (error) fail(error.message);
+  } else {
+    const { data, error } = await supabase.from("products").insert(row).select("id").single();
+    if (error) fail(error.message);
+    productId = data!.id;
+  }
+
+  // A shared tour has one price per person, kept as its single ticket type.
+  if (!isPrivate) {
+    const { data: tickets } = await supabase.from("ticket_types").select("id").eq("product_id", productId).order("id");
+    const [first, ...others] = tickets ?? [];
+    const ticket = { name_en: "Per person", name_es: "Por persona", price: guestPrice!, active: true };
+    const { error } = first
+      ? await supabase.from("ticket_types").update(ticket).eq("id", first.id)
+      : await supabase.from("ticket_types").insert({ ...ticket, product_id: productId });
+    if (error) fail(error.message);
+    if (others.length) {
+      await supabase.from("ticket_types").update({ active: false }).in("id", others.map((x) => x.id));
+    }
+  }
+
+  revalidatePath("/tours");
+  if (id) {
     revalidatePath(back);
     go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
   }
-  const { data, error } = await supabase.from("products").insert(row).select("id").single();
-  if (error) fail(error.message);
-  revalidatePath("/tours");
-  go(`/tours/${data!.id}`, {});
+  go(`/tours/${productId}`, {});
 }
 
 export async function saveBoatsForTour(form: FormData) {
@@ -80,52 +95,4 @@ export async function saveBoatsForTour(form: FormData) {
   }
   revalidatePath(back);
   go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
-}
-
-export async function saveTicketType(form: FormData) {
-  const productId = str(form, "product_id");
-  const back = `/tours/${productId}`;
-  const { supabase, fail, go } = await actionContext(back, ["admin"]);
-  const row = {
-    product_id: Number(productId),
-    name_en: str(form, "name"),
-    name_es: str(form, "name"),
-    price: num(form, "price"),
-    active: form.get("active") === "on",
-  };
-  const id = str(form, "id");
-  const { error } = id
-    ? await supabase.from("ticket_types").update(row).eq("id", id)
-    : await supabase.from("ticket_types").insert(row);
-  if (error) fail(error.message);
-  revalidatePath(back);
-  go(back, {});
-}
-
-export async function addPriceRule(form: FormData) {
-  const productId = str(form, "product_id");
-  const back = `/tours/${productId}`;
-  const { supabase, fail, go } = await actionContext(back, ["admin"]);
-  const { error } = await supabase.from("price_rules").insert({
-    product_id: Number(productId),
-    ticket_type_id: num(form, "ticket_type_id"),
-    label: str(form, "label"),
-    starts_on: str(form, "starts_on"),
-    ends_on: str(form, "ends_on"),
-    price: num(form, "price"),
-    percent_off: num(form, "percent_off"),
-  });
-  if (error) fail(error.message);
-  revalidatePath(back);
-  go(back, {});
-}
-
-export async function deletePriceRule(form: FormData) {
-  const productId = str(form, "product_id");
-  const back = `/tours/${productId}`;
-  const { supabase, fail, go } = await actionContext(back, ["admin"]);
-  const { error } = await supabase.from("price_rules").delete().eq("id", str(form, "id"));
-  if (error) fail(error.message);
-  revalidatePath(back);
-  go(back, {});
 }

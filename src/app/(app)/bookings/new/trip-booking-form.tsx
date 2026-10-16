@@ -6,7 +6,7 @@ import { TimePicker } from "@/components/time-picker";
 import { Button, Card, choiceCard, Field, FormSection, Input, MoneyInput, Select } from "@/components/ui";
 import { fmtClock } from "@/lib/format";
 import { createTripBooking } from "../actions";
-import { CustomerCards } from "./customer-cards";
+import { CustomerCard, DetailsCard } from "./customer-cards";
 
 export type Template = {
   id: number;
@@ -55,6 +55,8 @@ export function TripBookingForm({ templates, boats, date, labels: l, lang }: Pro
   // Picking another tour starts the trip fields again from that tour.
   return (
     <form onSubmit={submit}>
+      <CustomerCard labels={l} lang={lang} />
+
       <Card>
         <div className="flex flex-col gap-6">
           <TripFields
@@ -82,7 +84,7 @@ export function TripBookingForm({ templates, boats, date, labels: l, lang }: Pro
         </div>
       </Card>
 
-      <CustomerCards labels={l} lang={lang} />
+      <DetailsCard labels={l} />
 
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
         {error && (
