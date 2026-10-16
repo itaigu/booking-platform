@@ -49,12 +49,13 @@ create trigger payment_links_log after insert or update on payment_links
 create unique index payments_stripe_unique on payments (stripe_payment_id)
   where stripe_payment_id is not null;
 
-drop policy office_write on payments;
-create policy staff_insert on payments for insert to authenticated
+-- One policy for writing (changed in place): new rows must follow the check,
+-- and only an admin can delete, never a Stripe payment. Nobody can update.
+alter policy office_write on payments
+  using (has_role('admin') and method <> 'stripe')
   with check (has_role('admin', 'office', 'dock') and method <> 'stripe'
               and stripe_payment_id is null and recorded_by = auth.uid());
-create policy admin_delete on payments for delete to authenticated
-  using (has_role('admin') and method <> 'stripe');
+alter policy office_write on payments rename to staff_write;
 revoke update on payments from authenticated;
 
 -- Called by the Stripe webhook (with the secret key) when a link is paid.
