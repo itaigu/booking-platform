@@ -186,8 +186,10 @@ select tests.fails(format('select update_booking_guests(%s, 4)', :b4), 'Not enou
 -- Returning customers
 -- ---------------------------------------------------------------------------
 
-select tests.ok(tests.trip_for('{"full_name": "A. Perez", "email": "ANA@example.com"}', 1) = :c1,
-                'same email (any case) reuses the customer');
+select tests.ok(tests.trip_for('{"full_name": "Ana Perez", "email": "ANA@example.com"}', 1) = :c1,
+                'same name and email (any case) reuses the customer');
+select tests.ok(tests.trip_for('{"full_name": "A. Perez", "email": "ana@example.com"}', 5) <> :c1,
+                'same email with another name is a new customer');
 select tests.ok(tests.trip_for('{"full_name": "ana perez", "phone": "6241112222"}', 2) <> :c1,
                 'same phone but a different number of digits is a new customer');
 select tests.ok(tests.trip_for('{"full_name": "ana perez", "phone": "(52) 624-111-2222"}', 3) = :c1,
@@ -373,6 +375,7 @@ select tests.ok((select bool_and(status = 'cancelled' and cancelled_at is not nu
                 'bad weather: every booking cancelled with its date');
 select tests.fails(format('select cancel_departure(%s)', :d3), 'already cancelled', 'no cancelling twice');
 select tests.fails(format('select set_check_in(%s, true)', :b3), 'cancelled', 'no check-in on a cancelled booking');
+
 
 reset role;
 \o
