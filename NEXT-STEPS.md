@@ -45,6 +45,6 @@ Open [pull request #2](https://github.com/itaigu/booking-platform/pull/2), click
 
 ## 6. Tell Claude "done"
 
-Send the Vercel link in the project thread. Claude will then check everything works and help you add your boats, tours and schedules.
+Send the Vercel link in the project thread. Claude will then check everything works and help you add your boats and tours.
 
 If anything shows a red error, send a screenshot.

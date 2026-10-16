@@ -48,6 +48,8 @@ These hold no matter which screen or channel a booking comes from:
 - **Availability:** `departure_availability` shows seats booked and seats left per trip.
 - **Trips from schedules:** `generate_departures` fills the calendar for a date
   range, skipping days out of season, already created, or with no free boat.
+  The Schedules screen was taken out on 2026-10-16 (every trip is different), so
+  nothing uses it now; the `schedules` table and this function are still there.
 - **Prices:** `quote_booking` works out the price, including seasonal and sale prices.
 - **Bookings:** `create_booking` saves the customer, booking and items in one go;
   `reschedule_booking` moves a booking to another trip of the same tour.

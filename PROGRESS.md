@@ -83,6 +83,7 @@ The plan may change after talking with the team about what they really need.
   - Bookings can be searched by hotel code.
   - Not done yet: a hotel price list. For now the hotel price is typed in each booking.
   - Database update: `20261016010000_hotel_bookings.sql` (not yet in Supabase; Claude applies it once itai says OK).
+- The Schedules section was taken out (itai's call): every trip is different, so trips are created from New booking. Nothing changed in the database, so it can be put back.
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?
