@@ -1,11 +1,26 @@
 "use client";
 
+import { useEffect } from "react";
+
+// Every trip opens before printing, so the printout has all the bookings.
+const openAll = () =>
+  document.querySelectorAll<HTMLDetailsElement>("details[data-trip]").forEach((d) => (d.open = true));
+
 // Opens the browser's print window for the manifest.
 export function PrintButton({ label }: { label: string }) {
+  // Also when printing with Ctrl+P / Cmd+P.
+  useEffect(() => {
+    window.addEventListener("beforeprint", openAll);
+    return () => window.removeEventListener("beforeprint", openAll);
+  }, []);
+
   return (
     <button
       type="button"
-      onClick={() => window.print()}
+      onClick={() => {
+        openAll();
+        window.print();
+      }}
       className="inline-flex h-11 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:h-9"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>

@@ -88,6 +88,8 @@ The plan may change after talking with the team about what they really need.
 - 2026-10-16: Manifest page (like Rezdy's): pick a day and see every trip with its boat, crew, bookings, guests, pickup, notes, what was booked, total / paid / balance (not for captains and crew), a check-in button per booking (every role, captains included), a filter for who arrived, a print button, and a phone layout. Pickup time and place can be set on each booking's page.
   - Database update: `20261016030000_manifest.sql` (itai pasted it in the Supabase SQL Editor on 2026-10-16; Claude checked it).
   - "Paid" stays at $0 until payments are recorded (Stripe step). Crew shows only once crew can be assigned to trips (not built yet). "Send manifest" not done yet.
+- 2026-10-16: Manifest: each trip is a drop-down with a summary bar (like Rezdy), and a view picker with two views: Muelle (check-in, for the dock) and Administración (agent, coupon, internal notes, extras, who made it, agent ref., balance). Captains and crew only get the dock view. Each trip has a "Captain and crew" text field (trip page and booking page) that shows on the manifest.
+  - Database update: `20261016050000_manifest_admin.sql` (needs itai to paste it in the SQL Editor before merging).
 
 ## Open questions
 - Does each hotel have its own prices, or one hotel price list for all?

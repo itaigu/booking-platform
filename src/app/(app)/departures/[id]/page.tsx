@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { canBook, pageContext } from "@/lib/auth";
 import { fmtDateTime, fmtTime, fmtMoney, localDayOf } from "@/lib/format";
 import { EditTripForm } from "@/components/edit-trip-form";
+import { TripCrewForm } from "@/components/trip-crew-form";
 import { Badge, Button, ButtonLink, Card, Field, Flash, PageTitle, Select } from "@/components/ui";
 import type { Availability } from "@/lib/types";
 import { cancelTrip } from "./actions";
@@ -33,9 +34,10 @@ export default async function DeparturePage({ params, searchParams }: PageProps<
   if (!trip) notFound();
 
   // The guest list comes from trip_manifest, which hides prices from captains and crew.
-  const [{ data: manifest }, { data: boats }] = await Promise.all([
+  const [{ data: manifest }, { data: boats }, { data: dep }] = await Promise.all([
     supabase.rpc("trip_manifest", { p_departure_id: Number(id) }),
     supabase.from("boats").select("id, name, max_guests, active").order("name"),
+    supabase.from("departures").select("crew").eq("id", id).maybeSingle<{ crew: string | null }>(),
   ]);
   const bookings = (manifest ?? []) as ManifestRow[];
 
@@ -66,7 +68,7 @@ export default async function DeparturePage({ params, searchParams }: PageProps<
       <Card>
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div><dt className="text-slate-500">{t("date")}</dt><dd className="font-medium">{fmtDateTime(trip.starts_at, lang)} – {fmtTime(trip.ends_at, lang)}</dd></div>
-          <div><dt className="text-slate-500">{t("boat")}</dt><dd className="font-medium">{trip.boat_name}</dd></div>
+          <div><dt className="text-slate-500">{t("boat")}</dt><dd className="font-medium">{trip.boat_name}{dep?.crew && <div className="font-normal text-slate-600">{dep.crew}</div>}</dd></div>
           <div><dt className="text-slate-500">{t("guests")}</dt><dd className="font-medium">{trip.guests_booked} / {trip.capacity}</dd></div>
           <div><dt className="text-slate-500">{t("status")}</dt><dd>
             {scheduled ? <Badge tone="green">{t("dep_scheduled")}</Badge> : <Badge tone="red">{t(`dep_${trip.status}`)}</Badge>}
@@ -114,6 +116,8 @@ export default async function DeparturePage({ params, searchParams }: PageProps<
           </div>
         )}
       </Card>
+
+      {editable && scheduled && <TripCrewForm departureId={trip.id} crew={dep?.crew ?? null} back={back} t={t} />}
 
       {editable && scheduled && (
         <Card title={t("editTrip")}>

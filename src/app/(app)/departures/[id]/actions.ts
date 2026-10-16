@@ -45,3 +45,15 @@ export async function cancelTrip(form: FormData) {
   const ok = lang === "es" ? `Salida cancelada · ${data} reservas canceladas` : `Trip cancelled · ${data} bookings cancelled`;
   go(`/departures/${id}${q}`, { ok });
 }
+
+// The trip's captain and crew, as free text (e.g. "Capitán Gary, Raúl").
+export async function setTripCrew(form: FormData) {
+  const id = str(form, "id");
+  const back = safeBack(str(form, "back"), `/departures/${id}`);
+  const { supabase, fail, go, lang } = await actionContext(back, ["admin", "office"]);
+  const { error } = await supabase.from("departures").update({ crew: str(form, "crew") || null }).eq("id", id);
+  if (error) fail(error.message);
+  revalidatePath("/manifest");
+  revalidatePath(back);
+  go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
+}

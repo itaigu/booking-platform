@@ -345,12 +345,15 @@ select tests.ok((select count(*) = 1 and bool_and(total_price is null and paid i
 select tests.ok(set_check_in(:b1, true) is not null, 'crew: can check a group in');
 select tests.ok((select checked_in_at is not null from day_manifest(:'day1') where booking_id = :b1), 'checked in shows on the manifest');
 select tests.ok(set_check_in(:b1, false) is null, 'crew: can undo a check-in');
+update departures set crew = 'Someone' where id = :d1;
+select tests.ok((select crew is null from departures where id = :d1), 'crew: cannot change a trip''s crew');
 select tests.ok((select count(*) = 0 from day_manifest(:'day1' ::date + 1) where departure_id = :d1), 'the next day does not show this trip');
 
 select tests.login('dock');
 select tests.ok((select count(*) > 0 from bookings), 'dock: sees bookings');
 select tests.ok((select bool_and(total_price is not null) from trip_manifest(:d1)), 'dock: guest list with prices');
 select tests.ok((select bool_and(total_price is not null and paid = 0) from day_manifest(:'day1')), 'dock: day manifest with total and paid');
+select tests.ok((select bool_and(created_by_name is not null) from day_manifest(:'day1')), 'day manifest: who made each booking');
 select tests.ok((select count(*) = 0 from change_log), 'dock: no access to the history');
 select tests.ok((select count(*) = 0 from commission_lines), 'dock: no access to commissions');
 select tests.fails(format('select update_booking_guests(%s, 7)', :b1), 'row-level security', 'dock: cannot change bookings');
@@ -369,6 +372,8 @@ set role authenticated;
 -- ---------------------------------------------------------------------------
 
 select tests.login('office');
+update departures set crew = 'Capitán Gary, Raúl' where id = :d1;
+select tests.ok((select crew = 'Capitán Gary, Raúl' from departures where id = :d1), 'office: can write a trip''s crew');
 select tests.ok(cancel_departure(:d3, true) = 2, 'bad weather: both bookings cancelled');
 select tests.ok((select status = 'weather_cancelled' from departures where id = :d3), 'bad weather: trip marked as weather');
 select tests.ok((select bool_and(status = 'cancelled' and cancelled_at is not null) from bookings where departure_id = :d3),
