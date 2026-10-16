@@ -4,9 +4,9 @@ Do these once, in order.
 
 ## 1. Update the database
 
-In Supabase, open **SQL Editor → New query**, paste the whole of
-`supabase/migrations/20261014010000_dashboard.sql` and click **Run**.
-Then do the same with `supabase/migrations/20261014020000_boat_colors.sql`.
+Run every file in `supabase/migrations/`, in order, on the Supabase project.
+Claude does this with the Supabase connector, so each one is recorded in
+Supabase's migration history. GitHub is the only official copy of these files.
 
 ## 2. Create the first admin login
 

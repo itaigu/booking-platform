@@ -158,3 +158,23 @@ export async function rescheduleBooking(form: FormData) {
   revalidatePath("/calendar");
   go(back, {});
 }
+
+// Change the number of guests (and extra hours on a one-off private trip).
+// The price is worked out again unless a special price is given.
+export async function changeGuests(form: FormData) {
+  const id = str(form, "id");
+  const back = `/bookings/${id}`;
+  const { supabase, fail, go, lang } = await actionContext(back, ["admin", "office"]);
+  const { error } = await supabase.rpc("update_booking_guests", {
+    p_booking_id: Number(id),
+    p_guests: num(form, "guests"),
+    p_extra_hours: num(form, "extra_hours"),
+    p_extra_guest_price: num(form, "extra_guest_price"),
+    p_extra_hour_price: num(form, "extra_hour_price"),
+    p_total_override: num(form, "total_override"),
+  });
+  if (error) fail(error.message);
+  revalidatePath("/calendar");
+  revalidatePath(back);
+  go(back, { ok: lang === "es" ? "Guardado" : "Saved" });
+}

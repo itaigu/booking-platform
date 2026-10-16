@@ -16,4 +16,8 @@ export type Availability = {
   guests_booked: number;
   bookings_count: number;
   seats_left: number;
+  one_off: boolean;
+  boat_max: number;
+  extra_hours: number;
+  boat_free_at: string;
 };

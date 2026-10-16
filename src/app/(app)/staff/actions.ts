@@ -42,8 +42,19 @@ export async function updateStaff(form: FormData) {
     row.role = str(form, "role");
     row.active = form.get("active") === "on";
   }
+  // Optional: a new password, for staff who forgot theirs.
+  const password = str(form, "password");
+  if (password && password.length < 8) fail("Password must be at least 8 characters");
+
   const { error } = await supabase.from("staff").update(row).eq("id", id);
   if (error) fail(error.message);
+
+  if (password) {
+    const admin = createAdminClient();
+    if (!admin) fail("SUPABASE_SECRET_KEY is not set");
+    const { error: e2 } = await admin!.auth.admin.updateUserById(id, { password });
+    if (e2) fail(e2.message);
+  }
   revalidatePath("/staff");
   go("/staff", { ok: lang === "es" ? "Guardado" : "Saved" });
 }

@@ -262,6 +262,54 @@ const dict = {
   newTripInstead: ["Create a new trip instead", "Mejor crear un paseo nuevo"],
   saving: ["Saving…", "Guardando…"],
   boatFree: ["boat free at", "barco libre a las"],
+  // Changing trips and bookings
+  editTrip: ["Change date, time or boat", "Cambiar fecha, hora o barco"],
+  editTripDesc: [
+    "Every booking on this trip moves with it. The boat must be free and not blocked.",
+    "Todas las reservas de este paseo se mueven con él. El barco tiene que estar libre y sin bloqueo.",
+  ],
+  editTripMovesAll: [
+    "This trip has {n} bookings. All of them will move.",
+    "Este paseo tiene {n} reservas. Se van a mover todas.",
+  ],
+  rescheduleWholeTrip: [
+    "To change the time of the whole trip for everyone:",
+    "Para cambiar la hora de toda la salida para todos:",
+  ],
+  changeGuests: ["Change guests", "Cambiar número de personas"],
+  changeGuestsHint: [
+    "The total is worked out again. If it had a special price, type it again here.",
+    "El total se vuelve a calcular. Si tenía un precio especial, escríbelo otra vez aquí.",
+  ],
+  plusExtraHours: ["Plus {n} h of extra hours booked", "Más {n} h de horas extra reservadas"],
+  priceAdjustment: ["Price adjustment", "Ajuste de precio"],
+  customerShared: [
+    "This customer has {n} bookings. Changes to their details apply to all of them.",
+    "Este cliente tiene {n} reservas. Los cambios en sus datos se aplican a todas.",
+  ],
+  cancelFreesBoat: [
+    "Cancelling this booking also cancels its trip and frees the boat. Reactivating brings it back if the boat is still free.",
+    "Cancelar esta reserva también cancela su paseo y libera el barco. Si la reactivas, el paseo vuelve si el barco sigue libre.",
+  ],
+  reasonWeather: ["Bad weather", "Mal tiempo"],
+  reasonOther: ["Other reason", "Otro motivo"],
+  cancelTripConfirm: [
+    "Yes, also cancel its {n} bookings",
+    "Sí, cancelar también sus {n} reservas",
+  ],
+  history: ["History of changes", "Historial de cambios"],
+  histCreated: ["Booking created", "Reserva creada"],
+  histAdded: ["Added", "Agregado"],
+  histPayment: ["Payment recorded", "Pago registrado"],
+  histDeleted: ["Deleted", "Eliminado"],
+  histMoved: ["moved to another trip", "cambió a otra salida"],
+  histStartsAt: ["Departs", "Sale"],
+  histEndsAt: ["Returns", "Regresa"],
+  resetPassword: ["New password (optional)", "Nueva contraseña (opcional)"],
+  resetPasswordHint: [
+    "Only if they forgot theirs. At least 8 characters; tell them in person.",
+    "Solo si olvidó la suya. Mínimo 8 caracteres; díselo en persona.",
+  ],
 } as const;
 
 export type Key = keyof typeof dict;
@@ -293,6 +341,7 @@ const errorsEs: [RegExp, string][] = [
   [/Move or cancel its bookings first/, "Primero mueve o cancela sus reservas"],
   [/Choose at least one day/, "Elige al menos un día"],
   [/at least 8 characters/, "La contraseña debe tener al menos 8 caracteres"],
+  [/SUPABASE_SECRET_KEY is not set/, "Falta la configuración SUPABASE_SECRET_KEY en Vercel"],
   [/passwords don't match/, "Las dos contraseñas no coinciden"],
   [/New password should be different/, "La nueva contraseña debe ser distinta a la anterior"],
   [/products_check/, "Un charter privado necesita precio base y pax incluidos"],
@@ -308,6 +357,14 @@ const errorsEs: [RegExp, string][] = [
   [/price per extra hour/, "Escribe el precio por hora extra, o deja 0 horas extra"],
   [/minimum can't be more/, "El mínimo no puede ser mayor que los lugares por salida"],
   [/duplicate key value/, "Ya existe uno con ese nombre"],
+  [/Too many guests: (\d+) booked but only (\d+) fit \(trip on (.+)\)/, "Demasiadas personas: hay $1 reservadas y solo caben $2 (paseo del $3)"],
+  [/There are (\d+) trips at that time/, "Hay $1 salidas a esa hora. Muévelas o cancélalas primero"],
+  [/cancelled and cannot be changed/, "Esta salida está cancelada y ya no se puede cambiar"],
+  [/already cancelled/, "Esta salida ya está cancelada"],
+  [/Only confirmed bookings/, "Solo se pueden cambiar reservas confirmadas"],
+  [/(Trip|Booking) not found/, "No se encontró"],
+  [/Tick the box to confirm/, "Marca la casilla para confirmar que también se cancelan sus reservas"],
+  [/Some information is missing/, "Algún dato falta o no es válido"],
   [/violates check constraint/, "Algún dato falta o no es válido"],
 ];
 const errorsEn: [RegExp, string][] = [
