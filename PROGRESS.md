@@ -86,7 +86,7 @@ The plan may change after talking with the team about what they really need.
 - The Schedules section was taken out (itai's call): every trip is different, so trips are created from New booking. Nothing changed in the database, so it can be put back.
 - A booking taken another way (phone, WhatsApp…) can be turned into a hotel booking from its page ("Cambiar a reserva de hotel"), with the hotel, its code and the commission %.
 - 2026-10-16: Manifest page (like Rezdy's): pick a day and see every trip with its boat, crew, bookings, guests, pickup, notes, what was booked, total / paid / balance (not for captains and crew), a check-in button per booking (every role, captains included), a filter for who arrived, a print button, and a phone layout. Pickup time and place can be set on each booking's page.
-  - Database update: `20261016030000_manifest.sql` (NOT applied yet; waiting for itai's OK).
+  - Database update: `20261016030000_manifest.sql` (itai pasted it in the Supabase SQL Editor on 2026-10-16; Claude checked it).
   - "Paid" stays at $0 until payments are recorded (Stripe step). Crew shows only once crew can be assigned to trips (not built yet). "Send manifest" not done yet.
 
 ## Open questions
